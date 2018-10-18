@@ -1,4 +1,4 @@
-package com.microsoft.java.test.runner;
+package com.microsoft.java.test.runner.common;
 
 public interface TestStream {
     void print(TestMessageItem item);

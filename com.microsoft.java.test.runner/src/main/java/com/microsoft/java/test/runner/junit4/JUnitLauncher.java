@@ -9,18 +9,24 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-package com.microsoft.java.test.runner;
+package com.microsoft.java.test.runner.junit4;
 
-public class JUnitLauncher {
-    public static void main(String[] args) {
-        System.exit(execute(args));
-    }
+import com.microsoft.java.test.runner.common.ITestLauncher;
+import com.microsoft.java.test.runner.common.TestMessageItem;
+import com.microsoft.java.test.runner.common.TestOutputStream;
+import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
-    private static int execute(String[] args) {
+public class JUnitLauncher implements ITestLauncher {
+//    public static void main(String[] args) {
+//        System.exit(execute(args));
+//    }
+
+    @Override
+    public int execute(String[] args) {
         final TestOutputStream stream = TestOutputStream.instance();
         try {
             if (args.length == 0) {
-                TestingMessageHelper.reporterAttached(stream);
+                TestRunnerMessageHelper.reporterAttached();
                 stream.println(new TestMessageItem("No test found to run", null));
             } else {
                 final CustomizedJUnitCoreRunner jUnitCore = new CustomizedJUnitCoreRunner();

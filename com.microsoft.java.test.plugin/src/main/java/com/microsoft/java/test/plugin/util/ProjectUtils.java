@@ -78,5 +78,4 @@ public class ProjectUtils {
                 .map(entry -> entry.getPath())
                 .collect(Collectors.toList());
     }
-
 }

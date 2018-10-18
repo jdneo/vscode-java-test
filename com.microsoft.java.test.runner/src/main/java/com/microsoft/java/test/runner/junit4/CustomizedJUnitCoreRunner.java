@@ -8,11 +8,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
+package com.microsoft.java.test.runner.junit4;
 
-package com.microsoft.java.test.runner;
-
-import com.microsoft.java.test.runner.listeners.CustomizedJUnitTestListener;
-import com.microsoft.java.test.runner.listeners.JUnitExecutionListener;
+import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
@@ -25,17 +23,16 @@ public class CustomizedJUnitCoreRunner extends JUnitCore {
     public void run(String[] suites) {
         final List<JUnit4TestReference> testSuites = TestRunnerUtil.createTestReferences(suites);
         if (testSuites.isEmpty()) {
-            TestingMessageHelper.reporterAttached(TestOutputStream.instance());
+            TestRunnerMessageHelper.reporterAttached();
             return;
         }
 
-        final CustomizedJUnitTestListener delegate = new CustomizedJUnitTestListener();
-        final RunListener listener = new JUnitExecutionListener(delegate);
+        final JUnitExecutionListener listener = new JUnitExecutionListener();
         final RunNotifier runNotifier = new RunNotifier();
         runNotifier.addListener(listener);
-        delegate.testRunStarted();
-        for (final JUnit4TestReference testReference: testSuites) {
-            testReference.sendTree(delegate);
+        TestRunnerMessageHelper.rootPresentation();
+        for (final JUnit4TestReference testReference : testSuites) {
+            testReference.sendTree(listener);
         }
 
         final Result result = new Result();
@@ -48,4 +45,3 @@ public class CustomizedJUnitCoreRunner extends JUnitCore {
         runNotifier.fireTestRunFinished(result);
     }
 }
-

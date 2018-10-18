@@ -9,7 +9,10 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-package com.microsoft.java.test.runner;
+package com.microsoft.java.test.runner.junit4;
+
+import com.microsoft.java.test.runner.common.TestMessageItem;
+import com.microsoft.java.test.runner.common.TestOutputStream;
 
 import org.junit.runner.Request;
 import org.junit.runner.Runner;

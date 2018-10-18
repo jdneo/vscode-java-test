@@ -1,4 +1,4 @@
-package com.microsoft.java.test.runner;
+package com.microsoft.java.test.runner.common;
 
 import java.io.PrintStream;
 import java.util.StringJoiner;
@@ -6,15 +6,18 @@ import java.util.StringJoiner;
 public class TestOutputStream implements TestStream {
     private final PrintStream out;
     private final PrintStream err;
-    private static final TestOutputStream instance = new TestOutputStream();
 
     private TestOutputStream() {
         this.out = System.out;
         this.err = System.err;
     }
 
+    private static class SingletonHelper {
+        private static final TestOutputStream INSTANCE = new TestOutputStream();
+    }
+
     public static TestOutputStream instance() {
-        return instance;
+        return SingletonHelper.INSTANCE;
     }
 
     @Override

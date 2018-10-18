@@ -12,7 +12,7 @@
 package com.microsoft.java.test.plugin.handler;
 
 import com.microsoft.java.test.plugin.util.ProjectInfoFetcher;
-import com.microsoft.java.test.plugin.util.RuntimeClassPathResolver;
+import com.microsoft.java.test.plugin.util.RuntimeClassPathUtils;
 import com.microsoft.java.test.plugin.util.TestSearchUtils;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -30,10 +30,9 @@ public class TestDelegateCommandHandler implements IDelegateCommandHandler {
 
     @Override
     public Object executeCommand(String commandId, List<Object> arguments, IProgressMonitor monitor) throws Exception {
-
         switch (commandId) {
             case COMPUTE_RUNTIME_CLASSPATH:
-                return new RuntimeClassPathResolver().resolveRunTimeClassPath(arguments);
+                return RuntimeClassPathUtils.resolveRuntimeClassPath(arguments);
             case GET_PROJECT_INFO:
                 return ProjectInfoFetcher.getProjectInfo(arguments);
             case SEARCH_TEST_ITEMS:
