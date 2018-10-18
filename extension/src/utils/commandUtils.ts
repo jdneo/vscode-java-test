@@ -17,6 +17,12 @@ export async function searchTestCodeLens(uri: string): Promise<ITestItem[]> {
     return entries || [];
 }
 
+export async function resolveRuntimeClassPath(paths: string[]): Promise<string[]> {
+    const classpaths: string[] | undefined = await executeJavaLanguageServerCommand<string[]>(
+        JavaTestRunnerDelegateCommands.RESOLVE_RUNTIME_CLASSPATH, paths);
+    return classpaths || [];
+}
+
 function executeJavaLanguageServerCommand<T>(...rest: any[]): Thenable<T | undefined> {
     return commands.executeCommand<T>(JavaLanguageServerCommands.EXECUTE_WORKSPACE_COMMAND, ...rest);
 }
