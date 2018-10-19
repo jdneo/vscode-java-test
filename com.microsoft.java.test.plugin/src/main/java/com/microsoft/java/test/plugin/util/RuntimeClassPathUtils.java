@@ -16,11 +16,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RuntimeClassPathUtils {
+
+    @SuppressWarnings("unchecked")
     public static String[] resolveRuntimeClassPath(List<Object> arguments) throws CoreException {
         if (arguments == null || arguments.size() == 0) {
             return new String[0];
         }
-        final IPath[] testPaths = Arrays.stream(((String[]) arguments.get(0)))
+
+        final IPath[] testPaths = ((ArrayList<String>) arguments.get(0)).stream()
                 .map(fsPath -> new Path(fsPath))
                 .toArray(IPath[]::new);
 
@@ -31,7 +34,7 @@ public class RuntimeClassPathUtils {
         final Set<IProject> projectsToTest = Arrays.stream(testPaths)
                 .map(testPath -> {
                     for (final IProject project : projectList) {
-                        if (project.getFullPath().isPrefixOf(testPath)) {
+                        if (project.getLocation().isPrefixOf(testPath)) {
                             return project;
                         }
                     }

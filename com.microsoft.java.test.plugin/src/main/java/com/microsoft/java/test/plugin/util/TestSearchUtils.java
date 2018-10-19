@@ -131,6 +131,7 @@ public class TestSearchUtils {
             if (testMethodList.size() > 0) {
                 final TestItem parent = constructTestItem(type, getTestLevelForIType(type));
                 parent.setChildren(testMethodList);
+                parent.setKind(testMethodList.get(0).getKind());
                 resultList.add(parent);
             }
         }

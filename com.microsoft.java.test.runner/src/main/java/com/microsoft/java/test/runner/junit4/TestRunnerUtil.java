@@ -47,7 +47,7 @@ public class TestRunnerUtil {
 
     private static List<JUnit4TestReference> getRequestForOneMethod(String suite, int separatorIndex) {
         try {
-            final Class suiteClass = Class.forName(suite.substring(0, separatorIndex));
+            final Class<?> suiteClass = Class.forName(suite.substring(0, separatorIndex));
             final String method = suite.substring(separatorIndex + 1);
             final Request request = Request.method(suiteClass, method);
             final Runner runner = request.getRunner();

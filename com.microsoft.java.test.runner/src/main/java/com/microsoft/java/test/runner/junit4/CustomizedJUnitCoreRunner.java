@@ -30,6 +30,7 @@ public class CustomizedJUnitCoreRunner extends JUnitCore {
         final JUnitExecutionListener listener = new JUnitExecutionListener();
         final RunNotifier runNotifier = new RunNotifier();
         runNotifier.addListener(listener);
+        TestRunnerMessageHelper.reporterAttached();
         TestRunnerMessageHelper.rootPresentation();
         for (final JUnit4TestReference testReference : testSuites) {
             testReference.sendTree(listener);

@@ -1,5 +1,7 @@
 package com.microsoft.java.test.runner.testng;
 
+import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
+
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
@@ -17,12 +19,12 @@ import java.util.UUID;
 public class TestNGRunner {
     public void run(Map<String, List<String>> map) {
         final XmlSuite suite = new XmlSuite();
-        suite.setName("TestNGSuite");
         createTests(map, suite);
 
         final TestNG tng = new TestNG();
         final ITestNGListener listener = new TestNGListener();
         tng.addListener(listener);
+        TestRunnerMessageHelper.reporterAttached();
         tng.setXmlSuites(Collections.singletonList(suite));
         tng.run();
     }

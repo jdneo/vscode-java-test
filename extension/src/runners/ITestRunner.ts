@@ -2,14 +2,11 @@
 // Licensed under the MIT license.
 
 import { ITestItem } from '../protocols';
-import { IRunConfig } from '../runConfigs';
-import { ITestResult, ITestRunnerParams } from './models';
+import { IRunConfigItem } from '../runConfigs';
+import { ITestResult } from './models';
 
 export interface ITestRunner {
-    setup(tests: ITestItem[], config: IRunConfig, isDebug: boolean): Promise<ITestRunnerParams>;
-    run(params: ITestRunnerParams): Promise<ITestResult[]>;
-    postRun(): void;
-    cancel(): Promise<void>;
-    clone(): ITestRunner;
+    setup(tests: ITestItem[], isDebug: boolean, config?: IRunConfigItem): Promise<void>;
+    run(): Promise<ITestResult[]>;
     cleanUp(): Promise<void>;
 }

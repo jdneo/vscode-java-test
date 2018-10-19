@@ -4,70 +4,64 @@
 import * as cp from 'child_process';
 import * as fse from 'fs-extra';
 import * as getPort from 'get-port';
+import * as glob from 'glob-promise';
 import * as os from 'os';
 import * as path from 'path';
-import * as kill from 'tree-kill';
 import { debug, Uri, workspace, WorkspaceFolder } from 'vscode';
 import { ITestItem } from '../../protocols';
-import { IRunConfig } from '../../runConfigs';
+import { IRunConfigItem } from '../../runConfigs';
 import * as classpathUtils from '../../utils/classPathUtils';
 import { resolveRuntimeClassPath } from '../../utils/commandUtils';
+import { killProcess } from '../../utils/cpUtils';
 import { ITestRunner } from '../ITestRunner';
-import { ITestResult, ITestRunnerParams } from '../models';
+import { ITestResult } from '../models';
 import { BaseTestRunnerResultAnalyzer } from './BaseTestRunnerResultAnalyzer';
 
 export abstract class BaseTestRunner implements ITestRunner {
-    private process: cp.ChildProcess | undefined;
-    private storagePathForCurrentSession: string | undefined;
-    constructor(
-        protected _javaHome: string,
-        protected _storagePath: string) {}
+    protected process: cp.ChildProcess | undefined;
+    protected storagePathForCurrentSession: string | undefined;
+    protected port: number | undefined;
+    protected tests: ITestItem[];
+    protected isDebug: boolean;
+    protected classpath: string;
+    protected config: IRunConfigItem | undefined;
 
-    public abstract clone(): ITestRunner;
-    public abstract get runnerJarFilePath(): string;
-    public abstract get runnerClassName(): string;
-    public abstract get debugConfigName(): string;
-    public abstract constructCommandParams(params: ITestRunnerParams): Promise<string[]>;
-    public abstract getTestResultAnalyzer(params: ITestRunnerParams): BaseTestRunnerResultAnalyzer;
+    constructor(
+        protected javaHome: string,
+        protected storagePath: string) {}
+
+    public abstract getTestResultAnalyzer(): BaseTestRunnerResultAnalyzer;
 
     public get serverHome(): string {
         return path.join(__dirname, '..', '..', '..', '..', 'server');
     }
 
-    public async setup(tests: ITestItem[], config: IRunConfig, isDebug: boolean = false): Promise<ITestRunnerParams> {
-        if (!this.runnerJarFilePath) {
-            throw new Error('Failed to locate test server runtime!');
-        }
-        const port: number | undefined = isDebug ? await getPort() : undefined;
-        const testPaths: string[] = tests.map((item: ITestItem) => Uri.parse(item.uri).fsPath);
-        const classpaths: string[] = [...await resolveRuntimeClassPath(testPaths), this.runnerJarFilePath];
-        this.storagePathForCurrentSession = path.join(this._storagePath, new Date().getTime().toString());
-        const classpathStr: string = await classpathUtils.getClassPathString(classpaths, this.storagePathForCurrentSession);
-        return {
-            tests,
-            isDebug,
-            storagePath: this.storagePathForCurrentSession,
-            port,
-            classpathStr,
-            runnerJarFilePath: this.runnerJarFilePath,
-            runnerClassName: this.runnerClassName,
-            config,
-        };
+    public get runnerClassName(): string {
+        return 'com.microsoft.java.test.runner.Launcher';
     }
 
-    public async run(params: ITestRunnerParams): Promise<ITestResult[]> {
-        if (!params) {
-            throw new Error('Illegal env type, should pass in IJarFileTestRunnerParameters!');
-        }
-        const commandParams: string[] = await this.constructCommandParams(params);
-        const options: cp.SpawnOptions = { cwd: params.config.workingDirectory, env: process.env };
-        if (params.config && params.config.env) {
-            options.env = {...params.config.env, ...options.env};
+    public async setup(tests: ITestItem[], isDebug: boolean = false, config?: IRunConfigItem): Promise<void> {
+        const runnerJarFilePath: string = await this.getRunnerJarFilePath();
+        this.port = isDebug ? await getPort() : undefined;
+        this.tests = tests;
+        this.isDebug = isDebug;
+        const testPaths: string[] = tests.map((item: ITestItem) => Uri.parse(item.uri).fsPath);
+        const classpaths: string[] = [...await resolveRuntimeClassPath(testPaths), runnerJarFilePath];
+        this.storagePathForCurrentSession = path.join(this.storagePath, new Date().getTime().toString());
+        this.classpath = await classpathUtils.getClassPathString(classpaths, this.storagePathForCurrentSession);
+        this.config = config;
+    }
+
+    public async run(): Promise<ITestResult[]> {
+        const commandParams: string[] = await this.constructCommandParams();
+        const options: cp.SpawnOptions = { cwd: this.config ? this.config.workingDirectory : undefined, env: process.env };
+        if (this.config && this.config.env) {
+            options.env = {...this.config.env, ...options.env};
         }
         return new Promise<ITestResult[]>((resolve: (result: ITestResult[]) => void, reject: (error: Error) => void): void => {
-            const testResultAnalyzer: BaseTestRunnerResultAnalyzer = this.getTestResultAnalyzer(params);
+            const testResultAnalyzer: BaseTestRunnerResultAnalyzer = this.getTestResultAnalyzer();
             let buffer: string = '';
-            this.process = cp.spawn(path.join(this._javaHome, 'bin', 'java'), commandParams, options);
+            this.process = cp.spawn(path.join(this.javaHome, 'bin', 'java'), commandParams, options);
             this.process.on('error', (error: Error) => {
                 reject(error);
             });
@@ -93,17 +87,17 @@ export abstract class BaseTestRunner implements ITestRunner {
                     resolve(result);
                 }
             });
-            if (params.isDebug) {
-                const uri: Uri = Uri.parse(params.tests[0].uri);
+            if (this.isDebug) {
+                const uri: Uri = Uri.parse(this.tests[0].uri);
                 const rootDir: WorkspaceFolder | undefined = workspace.getWorkspaceFolder(Uri.file(uri.fsPath));
                 setTimeout(() => {
                     debug.startDebugging(rootDir, {
-                        name: this.debugConfigName,
+                        name: 'Debug Java Tests',
                         type: 'java',
                         request: 'attach',
                         hostName: 'localhost',
-                        port: params.port,
-                        projectName: params.config ? params.config.projectName : undefined,
+                        port: this.port,
+                        projectName: this.config ? this.config.projectName : undefined,
                     });
                 }, 500);
             }
@@ -112,16 +106,10 @@ export abstract class BaseTestRunner implements ITestRunner {
 
     public async cleanUp(): Promise<void> {
         try {
-            await new Promise<void>((_resolve: () => void, reject: (err: Error) => void): void => {
-                if (this.process) {
-                    kill(this.process.pid, 'SIGTERM', (error: Error | undefined) => {
-                        if (error) {
-                            reject(error);
-                        }
-                        this.process = undefined;
-                    });
-                }
-            });
+            if (this.process) {
+                await killProcess(this.process);
+                this.process = undefined;
+            }
             if (this.storagePathForCurrentSession) {
                 await fse.remove(this.storagePathForCurrentSession);
                 this.storagePathForCurrentSession = undefined;
@@ -131,20 +119,32 @@ export abstract class BaseTestRunner implements ITestRunner {
         }
     }
 
-    public postRun(): void {
-        throw new Error('Method not implemented.');
+    public constructCommandParams(): string[] {
+        const commandParams: string[] = [];
+        commandParams.push('-cp', this.classpath);
+
+        if (this.isDebug) {
+            commandParams.push('-Xdebug', `-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=${this.port}`);
+        }
+
+        if (this.config) {
+            if (this.config.vmargs.length > 0) {
+                commandParams.push(...this.config.vmargs);
+            }
+            if (this.config.args.length > 0) {
+                commandParams.push(...this.config.args);
+            }
+        }
+
+        commandParams.push(this.runnerClassName);
+        return commandParams;
     }
 
-    public async cancel(): Promise<void> {
-        // if (this.process) {
-        //     return new Promise<void>((resolve: () => void, reject: (err: Error) => void): void => {
-        //         kill(this.process.pid, 'SIGTERM', (error: Error | undefined) => {
-        //             if (error) {
-        //                 reject(error);
-        //             }
-        //             resolve();
-        //         });
-        //     });
-        // }
+    private async getRunnerJarFilePath(): Promise<string> {
+        const launcher: string[] = await glob.promise('**/com.microsoft.java.test.runner-*-jar-with-dependencies.jar', { cwd: this.serverHome });
+        if (launcher.length) {
+            return path.resolve(this.serverHome, launcher[0]);
+        }
+        throw new Error('Failed to find runner jar file.');
     }
 }

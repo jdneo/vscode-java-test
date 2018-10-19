@@ -1,6 +1,6 @@
 package com.microsoft.java.test.runner.testng;
 
-import com.microsoft.java.test.runner.common.TestOutputStream;
+import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
 import org.testng.IClassListener;
 import org.testng.ISuite;
@@ -10,70 +10,53 @@ import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
+import java.util.Collection;
+
 public class TestNGListener implements ISuiteListener, ITestListener, IClassListener {
-
-    private final TestOutputStream stream;
-
-    public TestNGListener() {
-        this.stream = TestOutputStream.instance();
-        TestNGMessageHelper.reporterAttached(stream);
-    }
 
     @Override
     public void onBeforeClass(ITestClass testClass) {
-        TestNGMessageHelper.testSuiteStarted(stream, testClass);
-
+        TestRunnerMessageHelper.testSuiteStarted(testClass.getName());
     }
 
     @Override
     public void onAfterClass(ITestClass testClass) {
-        TestNGMessageHelper.testSuiteFinished(stream, testClass.getName());
-
+        TestRunnerMessageHelper.testSuiteFinished(testClass.getName());
     }
 
     @Override
     public void onTestStart(ITestResult result) {
-        TestNGMessageHelper.testStarted(stream, result);
-
+        TestRunnerMessageHelper.testStarted(result.getTestClass().getName(), result.getName());
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
         final long duration = result.getEndMillis() - result.getStartMillis();
-        TestNGMessageHelper.testFinished(stream, result, duration);
-
+        TestRunnerMessageHelper.testFinished(result.getName(), duration);
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
         final long duration = result.getEndMillis() - result.getStartMillis();
-        TestNGMessageHelper.testFinished(stream, result, duration);
-        TestNGMessageHelper.testFailed(stream, result, duration);
-
+        TestRunnerMessageHelper.testFailed(result.getName(), result.getThrowable(), duration);
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        TestNGMessageHelper.testIgnored(stream, result.getName());
-
+        TestRunnerMessageHelper.testIgnored(result.getName());
     }
 
     @Override
     public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
         onTestFailure(result);
-
     }
 
     @Override
     public void onStart(ITestContext context) {
-        TestNGMessageHelper.suiteTreeNodeStarted(stream, context);
-
     }
 
     @Override
     public void onFinish(ITestContext context) {
-        TestNGMessageHelper.suiteTreeNodeEnded(stream, context);
-
     }
 
     @Override
@@ -82,8 +65,16 @@ public class TestNGListener implements ISuiteListener, ITestListener, IClassList
 
     @Override
     public void onFinish(ISuite suite) {
-        TestNGMessageHelper.testRunFinished(stream, suite);
+        final ITestContext context = getFirst(suite.getResults().values()).getTestContext(); // Can only be one
+        TestRunnerMessageHelper.testRunFinished(context.getAllTestMethods().length, context.getFailedTests().size(),
+                context.getSkippedTests().size());
+    }
 
+    private static <T> T getFirst(Collection<T> collection) {
+        for (final T entry : collection) {
+            return entry;
+        }
+        return null;
     }
 
 }
