@@ -2,17 +2,17 @@
 // Licensed under the MIT license.
 
 import { ITestItem } from '../../protocols';
-import { BaseTestRunner } from '../baseTestRunner/BaseTestRunner';
-import { BaseTestRunnerResultAnalyzer } from '../baseTestRunner/BaseTestRunnerResultAnalyzer';
+import { BaseRunner } from '../baseRunner/BaseRunner';
+import { BaseRunnerResultAnalyzer } from '../baseRunner/BaseRunnerResultAnalyzer';
 import { JUnit4RunnerResultAnalyzer } from './JUnit4RunnerResultAnalyzer';
 
-export class JUnit4TestRunner extends BaseTestRunner {
+export class JUnit4Runner extends BaseRunner {
 
     public constructCommandParams(): string[] {
         return [...super.constructCommandParams(), 'junit', ...this.tests.map((t: ITestItem) => t.fullName)];
     }
 
-    public getTestResultAnalyzer(): BaseTestRunnerResultAnalyzer {
+    public getTestResultAnalyzer(): BaseRunnerResultAnalyzer {
         return new JUnit4RunnerResultAnalyzer(this.tests);
     }
 }

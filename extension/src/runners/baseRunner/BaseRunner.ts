@@ -7,7 +7,7 @@ import * as getPort from 'get-port';
 import * as glob from 'glob-promise';
 import * as os from 'os';
 import * as path from 'path';
-import { debug, Uri, workspace, WorkspaceFolder } from 'vscode';
+import { debug, Uri, workspace } from 'vscode';
 import { ITestItem } from '../../protocols';
 import { IExecutionConfig } from '../../runConfigs';
 import * as classpathUtils from '../../utils/classPathUtils';
@@ -15,9 +15,9 @@ import { resolveRuntimeClassPath } from '../../utils/commandUtils';
 import { killProcess } from '../../utils/cpUtils';
 import { ITestRunner } from '../ITestRunner';
 import { ITestResult } from '../models';
-import { BaseTestRunnerResultAnalyzer } from './BaseTestRunnerResultAnalyzer';
+import { BaseRunnerResultAnalyzer } from './BaseRunnerResultAnalyzer';
 
-export abstract class BaseTestRunner implements ITestRunner {
+export abstract class BaseRunner implements ITestRunner {
     protected process: cp.ChildProcess | undefined;
     protected storagePathForCurrentSession: string | undefined;
     protected port: number | undefined;
@@ -25,12 +25,13 @@ export abstract class BaseTestRunner implements ITestRunner {
     protected isDebug: boolean;
     protected classpath: string;
     protected config: IExecutionConfig | undefined;
+    protected isCanceled: boolean;
 
     constructor(
         protected javaHome: string,
         protected storagePath: string) {}
 
-    public abstract getTestResultAnalyzer(): BaseTestRunnerResultAnalyzer;
+    public abstract getTestResultAnalyzer(): BaseRunnerResultAnalyzer;
 
     public get serverHome(): string {
         return path.join(__dirname, '..', '..', '..', '..', 'server');
@@ -59,7 +60,7 @@ export abstract class BaseTestRunner implements ITestRunner {
             options.env = {...this.config.env, ...options.env};
         }
         return new Promise<ITestResult[]>((resolve: (result: ITestResult[]) => void, reject: (error: Error) => void): void => {
-            const testResultAnalyzer: BaseTestRunnerResultAnalyzer = this.getTestResultAnalyzer();
+            const testResultAnalyzer: BaseRunnerResultAnalyzer = this.getTestResultAnalyzer();
             let buffer: string = '';
             this.process = cp.spawn(path.join(this.javaHome, 'bin', 'java'), commandParams, options);
             this.process.on('error', (error: Error) => {
@@ -80,7 +81,7 @@ export abstract class BaseTestRunner implements ITestRunner {
                 if (buffer.length > 0) {
                     testResultAnalyzer.analyzeData(buffer);
                 }
-                const result: ITestResult[] = testResultAnalyzer.feedBack();
+                const result: ITestResult[] = testResultAnalyzer.feedBack(this.isCanceled);
                 if (signal && signal !== 0) {
                     reject(new Error(`Runner exited with code ${signal}.`));
                 } else {
@@ -101,6 +102,11 @@ export abstract class BaseTestRunner implements ITestRunner {
                 }, 500);
             }
         });
+    }
+
+    public async cancel(): Promise<void> {
+        this.isCanceled = true;
+        await this.cleanUp();
     }
 
     public async cleanUp(): Promise<void> {

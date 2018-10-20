@@ -8,7 +8,7 @@ import { ITestItem, TestKind } from '../protocols';
 import { IExecutionConfig } from '../runConfigs';
 import { killProcess } from '../utils/cpUtils';
 import { ITestRunner } from './ITestRunner';
-import { JUnit4TestRunner } from './junit4TestRunner/Junit4TestRunner';
+import { JUnit4Runner } from './junit4Runner/Junit4Runner';
 import { ITestResult } from './models';
 
 export class RunnerExecutor {
@@ -109,7 +109,7 @@ export class RunnerExecutor {
     private getRunnerByKind(kind: TestKind): ITestRunner | undefined {
         switch (kind) {
             case TestKind.JUnit:
-                return new JUnit4TestRunner(this.javaHome, this.storageRootPath);
+                return new JUnit4Runner(this.javaHome, this.storageRootPath);
             default:
                 return undefined;
         }
