@@ -5,7 +5,7 @@ import * as fse from 'fs-extra';
 import * as path from 'path';
 import { Uri, workspace, WorkspaceFolder } from 'vscode';
 import { IProjectInfo, ITestItem } from './protocols';
-import { ITestConfig } from './runConfigs';
+import { IExecutionConfigGroup, ITestConfig } from './runConfigs';
 import { getProjectInfo } from './utils/commandUtils';
 
 class TestConfigManager {
@@ -17,7 +17,7 @@ class TestConfigManager {
         return this.configRelativePath;
     }
 
-    public async loadConfig(tests: ITestItem[]): Promise<ITestConfig[]> {
+    public async loadRunConfig(tests: ITestItem[], isDebug: boolean): Promise<IExecutionConfigGroup[]> {
         const folders: WorkspaceFolder[] = this.getFoldersOfTests(tests);
         const configs: ITestConfig[] = [];
         for (const folder of folders) {
@@ -29,7 +29,10 @@ class TestConfigManager {
                 throw error;
             }
         }
-        return configs;
+        if (isDebug) {
+            return configs.map((c: ITestConfig) => c.debug);
+        }
+        return configs.map((c: ITestConfig) => c.run);
     }
 
     private async createTestConfigIfNotExisted(folder: WorkspaceFolder): Promise<string> {

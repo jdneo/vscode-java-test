@@ -89,5 +89,6 @@ function isWin() {
 }
 
 function mvnw() {
-    return isWin() ? 'mvnw.cmd' : './mvnw';
+    // return isWin() ? 'mvnw.cmd' : './mvnw';
+    return 'mvn'
 }

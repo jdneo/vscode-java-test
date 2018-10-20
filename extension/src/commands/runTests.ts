@@ -3,25 +3,24 @@
 
 import { QuickPickItem, window } from 'vscode';
 import { ITestItem } from '../protocols';
-import { IRunConfig, IRunConfigItem, ITestConfig } from '../runConfigs';
+import { IExecutionConfig, IExecutionConfigGroup } from '../runConfigs';
 import { RunnerExecutor } from '../runners/runnerExecutor';
 import { testConfigManager } from '../testConfigManager';
 
 export async function runTests(runnerExecutor: RunnerExecutor, tests: ITestItem[], isDebug: boolean, isDefaultConfig: boolean): Promise<void> {
-    const config: IRunConfigItem | undefined = await getTestConfig(tests, isDebug, isDefaultConfig);
+    const config: IExecutionConfig | undefined = await getTestConfig(tests, isDebug, isDefaultConfig);
     return runnerExecutor.run(tests, isDebug, config);
 }
 
-async function getTestConfig(tests: ITestItem[], isDebug: boolean, isDefaultConfig: boolean): Promise<IRunConfigItem | undefined> {
-    const configs: ITestConfig[] = await testConfigManager.loadConfig(tests);
-    const runConfigs: IRunConfig[] = isDebug ? configs.map((c: ITestConfig) => c.debug) : configs.map((c: ITestConfig) => c.run);
+async function getTestConfig(tests: ITestItem[], isDebug: boolean, isDefaultConfig: boolean): Promise<IExecutionConfig | undefined> {
+    const configGroups: IExecutionConfigGroup[] = await testConfigManager.loadRunConfig(tests, isDebug);
     if (isDefaultConfig) {
         // we don't support `Run with default config` if you trigger the test from multi-root folders.
-        if (runConfigs.length !== 1 || !runConfigs[0].default) {
+        if (configGroups.length !== 1 || !configGroups[0].default) {
             return undefined;
         }
-        const runConfig: IRunConfig = runConfigs[0];
-        const candidates: IRunConfigItem[] = runConfig.items.filter((item: IRunConfigItem) => item.name === runConfig.default);
+        const runConfig: IExecutionConfigGroup = configGroups[0];
+        const candidates: IExecutionConfig[] = runConfig.items.filter((item: IExecutionConfig) => item.name === runConfig.default);
         if (candidates.length === 0) {
             window.showWarningMessage(`There is no config with name: ${runConfig.default}.`);
             return undefined;
@@ -32,12 +31,12 @@ async function getTestConfig(tests: ITestItem[], isDebug: boolean, isDefaultConf
         return candidates[0];
     }
 
-    if (runConfigs.length > 1) {
+    if (configGroups.length > 1) {
         window.showWarningMessage('It is not supported to run tests with config from multi root.');
     }
 
-    const configItems: IRunConfigItem[] = [];
-    for (const config of runConfigs) {
+    const configItems: IExecutionConfig[] = [];
+    for (const config of configGroups) {
         configItems.push(...config.items);
     }
     const choices: IRunConfigQuickPick[] = [];
@@ -56,5 +55,5 @@ async function getTestConfig(tests: ITestItem[], isDebug: boolean, isDefaultConf
 }
 
 interface IRunConfigQuickPick extends QuickPickItem {
-    item: IRunConfigItem;
+    item: IExecutionConfig;
 }

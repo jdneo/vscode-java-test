@@ -9,7 +9,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { debug, Uri, workspace, WorkspaceFolder } from 'vscode';
 import { ITestItem } from '../../protocols';
-import { IRunConfigItem } from '../../runConfigs';
+import { IExecutionConfig } from '../../runConfigs';
 import * as classpathUtils from '../../utils/classPathUtils';
 import { resolveRuntimeClassPath } from '../../utils/commandUtils';
 import { killProcess } from '../../utils/cpUtils';
@@ -24,7 +24,7 @@ export abstract class BaseTestRunner implements ITestRunner {
     protected tests: ITestItem[];
     protected isDebug: boolean;
     protected classpath: string;
-    protected config: IRunConfigItem | undefined;
+    protected config: IExecutionConfig | undefined;
 
     constructor(
         protected javaHome: string,
@@ -40,7 +40,7 @@ export abstract class BaseTestRunner implements ITestRunner {
         return 'com.microsoft.java.test.runner.Launcher';
     }
 
-    public async setup(tests: ITestItem[], isDebug: boolean = false, config?: IRunConfigItem): Promise<void> {
+    public async setup(tests: ITestItem[], isDebug: boolean = false, config?: IExecutionConfig): Promise<void> {
         const runnerJarFilePath: string = await this.getRunnerJarFilePath();
         this.port = isDebug ? await getPort() : undefined;
         this.tests = tests;
@@ -89,9 +89,8 @@ export abstract class BaseTestRunner implements ITestRunner {
             });
             if (this.isDebug) {
                 const uri: Uri = Uri.parse(this.tests[0].uri);
-                const rootDir: WorkspaceFolder | undefined = workspace.getWorkspaceFolder(Uri.file(uri.fsPath));
                 setTimeout(() => {
-                    debug.startDebugging(rootDir, {
+                    debug.startDebugging(workspace.getWorkspaceFolder(uri), {
                         name: 'Debug Java Tests',
                         type: 'java',
                         request: 'attach',

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export interface IRunConfigItem {
+export interface IExecutionConfig {
     name: string;
     projectName: string;
     workingDirectory: string;
@@ -11,12 +11,12 @@ export interface IRunConfigItem {
     preLaunchTask: string;
 }
 
-export interface IRunConfig {
+export interface IExecutionConfigGroup {
     default: string;
-    items: IRunConfigItem[];
+    items: IExecutionConfig[];
 }
 
 export interface ITestConfig {
-    run: IRunConfig;
-    debug: IRunConfig;
+    run: IExecutionConfigGroup;
+    debug: IExecutionConfigGroup;
 }

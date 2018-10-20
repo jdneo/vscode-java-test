@@ -5,7 +5,7 @@ import * as cp from 'child_process';
 import { window } from 'vscode';
 import { CHILD_PROCESS_MAX_BUFFER_SIZE } from '../constants/configs';
 import { ITestItem, TestKind } from '../protocols';
-import { IRunConfigItem } from '../runConfigs';
+import { IExecutionConfig } from '../runConfigs';
 import { killProcess } from '../utils/cpUtils';
 import { ITestRunner } from './ITestRunner';
 import { JUnit4TestRunner } from './junit4TestRunner/Junit4TestRunner';
@@ -23,7 +23,7 @@ export class RunnerExecutor {
         this.storageRootPath = storageRootPath;
     }
 
-    public async run(testItems: ITestItem[], isDebug: boolean = false, config?: IRunConfigItem): Promise<void> {
+    public async run(testItems: ITestItem[], isDebug: boolean = false, config?: IExecutionConfig): Promise<void> {
         if (this.isRunning) {
             window.showInformationMessage('A test session is currently running. Please wait until it finishes.');
             return;
@@ -33,18 +33,14 @@ export class RunnerExecutor {
             this.runnerMap = this.classifyTestsByKind(testItems);
             for (const [runner, tests] of this.runnerMap.entries()) {
                 if (config && config.preLaunchTask.length > 0) {
-                    try {
-                        this.preLaunchTask = cp.exec(
-                            config.preLaunchTask,
-                            {
-                                maxBuffer: CHILD_PROCESS_MAX_BUFFER_SIZE,
-                                cwd: config.workingDirectory,
-                            },
-                        );
-                        await this.execPreLaunchTask();
-                    } finally {
-                        await this.cleanUp();
-                    }
+                    this.preLaunchTask = cp.exec(
+                        config.preLaunchTask,
+                        {
+                            maxBuffer: CHILD_PROCESS_MAX_BUFFER_SIZE,
+                            cwd: config.workingDirectory,
+                        },
+                    );
+                    await this.execPreLaunchTask();
                 }
                 await runner.setup(tests, isDebug, config);
                 const results: ITestResult[] = await runner.run();
@@ -57,20 +53,24 @@ export class RunnerExecutor {
     }
 
     private async cleanUp(): Promise<void> {
-        if (this.preLaunchTask) {
-            await killProcess(this.preLaunchTask);
-            this.preLaunchTask = undefined;
-        }
-
-        const promises: Array<Promise<void>> = [];
-        if (this.runnerMap) {
-            for (const runner of this.runnerMap.keys()) {
-                promises.push(runner.cleanUp());
+        try {
+            if (this.preLaunchTask) {
+                await killProcess(this.preLaunchTask);
+                this.preLaunchTask = undefined;
             }
-            this.runnerMap.clear();
-            this.runnerMap = undefined;
+
+            const promises: Array<Promise<void>> = [];
+            if (this.runnerMap) {
+                for (const runner of this.runnerMap.keys()) {
+                    promises.push(runner.cleanUp());
+                }
+                this.runnerMap.clear();
+                this.runnerMap = undefined;
+            }
+            await Promise.all(promises);
+        } catch (error) {
+            // Swallow
         }
-        await Promise.all(promises);
         this.isRunning = false;
     }
 
@@ -96,7 +96,7 @@ export class RunnerExecutor {
     private mapTestsByRunner(testsPerProjectAndKind: Map<string, ITestItem[]>): Map<ITestRunner, ITestItem[]> {
         const map: Map<ITestRunner, ITestItem[]> = new Map<ITestRunner, ITestItem[]>();
         for (const tests of testsPerProjectAndKind.values()) {
-            const runner: ITestRunner | undefined = this.getRunnerForKind(tests[0].kind);
+            const runner: ITestRunner | undefined = this.getRunnerByKind(tests[0].kind);
             if (runner) {
                 map.set(runner, tests);
             } else {
@@ -106,7 +106,7 @@ export class RunnerExecutor {
         return map;
     }
 
-    private getRunnerForKind(kind: TestKind): ITestRunner | undefined {
+    private getRunnerByKind(kind: TestKind): ITestRunner | undefined {
         switch (kind) {
             case TestKind.JUnit:
                 return new JUnit4TestRunner(this.javaHome, this.storageRootPath);
@@ -128,10 +128,10 @@ export class RunnerExecutor {
                     //     });
                     reject(err);
                 });
-                this.preLaunchTask.stderr.on('data', (data: Buffer) => {
+                this.preLaunchTask.stderr.on('data', (_data: Buffer) => {
                     // Logger.error(`Error occurred: ${data.toString()}`);
                 });
-                this.preLaunchTask.stdout.on('data', (data: Buffer) => {
+                this.preLaunchTask.stdout.on('data', (_data: Buffer) => {
                     // Logger.info(data.toString());
                 });
                 this.preLaunchTask.on('close', (signal: number) => {
