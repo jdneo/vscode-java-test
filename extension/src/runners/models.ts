@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export interface ITestResult {
-    uri: string;
-    test: string;
+import { ITestItemBase } from '../protocols';
+
+export interface ITestResult extends ITestItemBase {
     result: ITestResultDetails;
 }
 

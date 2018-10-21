@@ -6,6 +6,7 @@ import { commands, Disposable, Extension, ExtensionContext, extensions, FileSyst
 import { initializeFromJsonFile, instrumentOperation } from 'vscode-extension-telemetry-wrapper';
 import { testCodeLensProvider } from './codeLensProvider';
 import { openTextDocumentForNode } from './commands/explorerCommands';
+import { showReport } from './commands/reportCommands';
 import { runTests } from './commands/runTests';
 import { JavaTestRunnerCommands } from './constants/commands';
 import { explorerNodeManager } from './explorer/explorerNodeManager';
@@ -13,6 +14,7 @@ import { testExplorer } from './explorer/testExplorer';
 import { TestTreeNode } from './explorer/TestTreeNode';
 import { ITestItem } from './protocols';
 import { RunnerExecutor } from './runners/runnerExecutor';
+import { testReportProvider } from './testReportProvider';
 
 export async function activate(context: ExtensionContext): Promise<void> {
     await initializeFromJsonFile(context.asAbsolutePath('./package.json'));
@@ -46,15 +48,18 @@ async function doActivate(_operationId: string, context: ExtensionContext): Prom
     });
 
     const runnerExecutor: RunnerExecutor = new RunnerExecutor(javaHome, context.storagePath || os.tmpdir());
+    testReportProvider.initialize(context);
 
     context.subscriptions.push(
         window.registerTreeDataProvider(testExplorer.testExplorerViewId, testExplorer),
         explorerNodeManager,
         watcher,
         languages.registerCodeLensProvider('java', testCodeLensProvider),
+        workspace.registerTextDocumentContentProvider(testReportProvider.scheme, testReportProvider),
         instrumentAndRegisterCommand(JavaTestRunnerCommands.OPEN_DOCUMENT_FOR_NODE, async (node: TestTreeNode) => await openTextDocumentForNode(node)),
         instrumentAndRegisterCommand(JavaTestRunnerCommands.REFRESH_EXPLORER, (node: TestTreeNode) => testExplorer.refresh(node)),
         instrumentAndRegisterCommand(JavaTestRunnerCommands.RUN_TEST_FROM_CODELENS, async (tests: ITestItem[]) => await runTests(runnerExecutor, tests, false, true)),
+        instrumentAndRegisterCommand(JavaTestRunnerCommands.SHOW_TEST_REPORT, (tests: ITestItem[]) => showReport(tests)),
     );
     await commands.executeCommand('setContext', 'java.test.activated', true);
 }

@@ -25,8 +25,8 @@ export abstract class BaseRunnerResultAnalyzer {
         } while (match);
     }
 
-    public analyzeError(error: string): void {
-        // Logger.error(`Error occurred: ${error}`);
+    public analyzeError(_error: string): void {
+        // TODO: add implementation when add Logger
     }
 
     public feedBack(isCanceled: boolean): ITestResult[] {

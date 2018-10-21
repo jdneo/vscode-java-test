@@ -70,7 +70,22 @@
                 },
                 "category": "Java"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "Java Test configuration",
+            "properties": {
+                "java.test.report.position": {
+                    "type": "string",
+                    "enum": [
+                        "sideView",
+                        "currentView"
+                    ],
+                    "default": "sideView",
+                    "description": "Specify where to show the test report",
+                    "scope": "window"
+                }
+            }
+        }
     },
     "scripts": {
         "postinstall": "node ./node_modules/vscode/bin/install",
@@ -89,6 +104,7 @@
         "@types/fs-extra": "^5.0.4",
         "@types/mocha": "^2.2.48",
         "@types/node": "^6.0.110",
+        "@types/pug": "^2.0.4",
         "gulp": "^4.0.0",
         "gulp-decompress": "^2.0.2",
         "gulp-download": "0.0.1",
@@ -105,6 +121,7 @@
         "fs-extra": "^7.0.0",
         "get-port": "^4.0.0",
         "glob-promise": "^3.4.0",
+        "pug": "^2.0.3",
         "tree-kill": "^1.2.0",
         "vscode-extension-telemetry-wrapper": "^0.3.1"
     }

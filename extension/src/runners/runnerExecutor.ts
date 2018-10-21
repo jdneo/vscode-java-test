@@ -3,9 +3,11 @@
 
 import * as cp from 'child_process';
 import { window } from 'vscode';
+import { testCodeLensProvider } from '../codeLensProvider';
 import { CHILD_PROCESS_MAX_BUFFER_SIZE } from '../constants/configs';
 import { ITestItem, TestKind } from '../protocols';
 import { IExecutionConfig } from '../runConfigs';
+import { testResultManager } from '../testResultManager';
 import { killProcess } from '../utils/cpUtils';
 import { ITestRunner } from './ITestRunner';
 import { JUnit4Runner } from './junit4Runner/Junit4Runner';
@@ -44,6 +46,8 @@ export class RunnerExecutor {
                 }
                 await runner.setup(tests, isDebug, config);
                 const results: ITestResult[] = await runner.run();
+                testResultManager.storeResult(...results);
+                testCodeLensProvider.refresh();
             }
         } catch (error) {
             // Swallow
