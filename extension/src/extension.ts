@@ -15,6 +15,7 @@ import { TestTreeNode } from './explorer/TestTreeNode';
 import { ITestItem } from './protocols';
 import { RunnerExecutor } from './runners/runnerExecutor';
 import { testReportProvider } from './testReportProvider';
+import { testStatusBarProvider } from './testStatusBarProvider';
 
 export async function activate(context: ExtensionContext): Promise<void> {
     await initializeFromJsonFile(context.asAbsolutePath('./package.json'));
@@ -32,6 +33,7 @@ async function doActivate(_operationId: string, context: ExtensionContext): Prom
     }
 
     testExplorer.initialize(context);
+    testStatusBarProvider.show();
     const watcher: FileSystemWatcher = workspace.createFileSystemWatcher('**/*.{[jJ][aA][vV][aA]}');
     watcher.onDidChange((uri: Uri) => {
         const node: TestTreeNode | undefined = explorerNodeManager.getNode(uri.fsPath);
@@ -53,6 +55,7 @@ async function doActivate(_operationId: string, context: ExtensionContext): Prom
     context.subscriptions.push(
         window.registerTreeDataProvider(testExplorer.testExplorerViewId, testExplorer),
         explorerNodeManager,
+        testStatusBarProvider,
         watcher,
         languages.registerCodeLensProvider('java', testCodeLensProvider),
         workspace.registerTextDocumentContentProvider(testReportProvider.scheme, testReportProvider),

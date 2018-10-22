@@ -8,6 +8,7 @@ import { CHILD_PROCESS_MAX_BUFFER_SIZE } from '../constants/configs';
 import { ITestItem, TestKind } from '../protocols';
 import { IExecutionConfig } from '../runConfigs';
 import { testResultManager } from '../testResultManager';
+import { testStatusBarProvider } from '../testStatusBarProvider';
 import { killProcess } from '../utils/cpUtils';
 import { ITestRunner } from './ITestRunner';
 import { JUnit4Runner } from './junit4Runner/Junit4Runner';
@@ -31,6 +32,7 @@ export class RunnerExecutor {
             return;
         }
         this.isRunning = true;
+        testStatusBarProvider.showRunningTest();
         try {
             this.runnerMap = this.classifyTestsByKind(testItems);
             for (const [runner, tests] of this.runnerMap.entries()) {
@@ -47,6 +49,7 @@ export class RunnerExecutor {
                 await runner.setup(tests, isDebug, config);
                 const results: ITestResult[] = await runner.run();
                 testResultManager.storeResult(...results);
+                testStatusBarProvider.showTestResult(results);
                 testCodeLensProvider.refresh();
             }
         } catch (error) {

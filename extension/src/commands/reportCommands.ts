@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 import { commands, Uri, ViewColumn, workspace, WorkspaceConfiguration } from 'vscode';
-import { ITestItem } from '../protocols';
+import { ITestItemBase } from '../protocols';
 import { testReportProvider } from '../testReportProvider';
 import { encodeTestReportUri } from '../utils/testReportUtils';
 
-export async function showReport(tests: ITestItem[]): Promise<void> {
+export async function showReport(tests: ITestItemBase[]): Promise<void> {
     const uri: Uri = encodeTestReportUri(tests);
     const config: WorkspaceConfiguration = workspace.getConfiguration();
     const position: string = config.get<string>('java.test.report.position', 'sideView');

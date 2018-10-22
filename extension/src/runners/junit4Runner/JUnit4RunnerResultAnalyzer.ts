@@ -60,7 +60,7 @@ export class JUnit4RunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
 
         return {
             fullName: test.fullName,
-            uri: Uri.parse(test.uri).fsPath,
+            uri: Uri.parse(test.uri).toString(),
             result: testResultDetails,
         };
     }

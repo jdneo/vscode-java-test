@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Disposable } from 'vscode';
+import { Disposable, Uri } from 'vscode';
 import { ITestResult, ITestResultDetails } from './runners/models';
 
 class TestResultManager implements Disposable {
@@ -9,18 +9,19 @@ class TestResultManager implements Disposable {
 
     public storeResult(...results: ITestResult[]): void {
         for (const result of results) {
-            if (!this.testResultMap.has(result.uri)) {
-                this.testResultMap.set(result.uri, {
+            const fsPath: string = Uri.parse(result.uri).fsPath;
+            if (!this.testResultMap.has(fsPath)) {
+                this.testResultMap.set(fsPath, {
                     methodsMap: new Map<string, ITestResultDetails>(),
                     isDirty: false,
                 });
             }
-            this.testResultMap.get(result.uri)!.methodsMap.set(result.fullName, result.result);
+            this.testResultMap.get(fsPath)!.methodsMap.set(result.fullName, result.result);
         }
     }
 
-    public getResult(uriString: string, testFullName: string): ITestResultDetails | undefined {
-        const resultsInUri: IResultsInUri | undefined = this.testResultMap.get(uriString);
+    public getResult(fsPath: string, testFullName: string): ITestResultDetails | undefined {
+        const resultsInUri: IResultsInUri | undefined = this.testResultMap.get(fsPath);
         if (resultsInUri) {
             return resultsInUri.methodsMap.get(testFullName);
         }
