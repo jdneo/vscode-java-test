@@ -2,48 +2,37 @@ package com.microsoft.java.test.runner.testng;
 
 import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
-import org.testng.IClassListener;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
-import org.testng.ITestClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 import java.util.Collection;
 
-public class TestNGListener implements ISuiteListener, ITestListener, IClassListener {
-
-    @Override
-    public void onBeforeClass(ITestClass testClass) {
-        TestRunnerMessageHelper.testSuiteStarted(testClass.getName());
-    }
-
-    @Override
-    public void onAfterClass(ITestClass testClass) {
-        TestRunnerMessageHelper.testSuiteFinished(testClass.getName());
-    }
+public class TestNGListener implements ISuiteListener, ITestListener {
 
     @Override
     public void onTestStart(ITestResult result) {
-        TestRunnerMessageHelper.testStarted(result.getTestClass().getName(), result.getName());
+        TestRunnerMessageHelper.testStarted(result.getTestClass().getName() + "#" + result.getName());
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
         final long duration = result.getEndMillis() - result.getStartMillis();
-        TestRunnerMessageHelper.testFinished(result.getName(), duration);
+        TestRunnerMessageHelper.testFinished(result.getTestClass().getName() + "#" + result.getName(), duration);
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
         final long duration = result.getEndMillis() - result.getStartMillis();
-        TestRunnerMessageHelper.testFailed(result.getName(), result.getThrowable(), duration);
+        TestRunnerMessageHelper.testFailed(result.getTestClass().getName() + "#" + result.getName(),
+                result.getThrowable(), duration);
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        TestRunnerMessageHelper.testIgnored(result.getName());
+        TestRunnerMessageHelper.testIgnored(result.getTestClass().getName() + "#" + result.getName());
     }
 
     @Override

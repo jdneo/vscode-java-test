@@ -13,6 +13,7 @@ import { killProcess } from '../utils/cpUtils';
 import { ITestRunner } from './ITestRunner';
 import { JUnit4Runner } from './junit4Runner/Junit4Runner';
 import { ITestResult } from './models';
+import { TestNGRunner } from './testngRunner/TestNGRunner';
 
 export class RunnerExecutor {
     private readonly javaHome: string;
@@ -117,6 +118,8 @@ export class RunnerExecutor {
         switch (kind) {
             case TestKind.JUnit:
                 return new JUnit4Runner(this.javaHome, this.storageRootPath);
+            case TestKind.TestNG:
+                return new TestNGRunner(this.javaHome, this.storageRootPath);
             default:
                 return undefined;
         }

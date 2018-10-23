@@ -2,7 +2,7 @@ package com.microsoft.java.test.runner.testng;
 
 import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
-import org.testng.ITestNGListener;
+import org.testng.ITestListener;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
@@ -22,7 +22,7 @@ public class TestNGRunner {
         createTests(map, suite);
 
         final TestNG tng = new TestNG();
-        final ITestNGListener listener = new TestNGListener();
+        final ITestListener listener = new TestNGListener();
         tng.addListener(listener);
         TestRunnerMessageHelper.reporterAttached();
         tng.setXmlSuites(Collections.singletonList(suite));

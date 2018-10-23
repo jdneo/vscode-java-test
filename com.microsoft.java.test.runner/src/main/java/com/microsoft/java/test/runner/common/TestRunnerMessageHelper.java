@@ -16,19 +16,18 @@ public class TestRunnerMessageHelper {
                 .println(MessageUtils.createWithName(TestMessageConstants.ROOT_NAME, "Default Suite"));
     }
 
-    public static void testStarted(String className, String methodName) {
-        TestOutputStream.instance().println(MessageUtils.createWithNameAndLocation(TestMessageConstants.TEST_STARTED,
-                methodName, "java:test://" + className + "." + methodName));
+    public static void testStarted(String name) {
+        TestOutputStream.instance().println(MessageUtils.createWithName(TestMessageConstants.TEST_STARTED, name));
     }
 
-    public static void testIgnored(String methodName) {
-        TestOutputStream.instance().println(MessageUtils.createWithName(TestMessageConstants.TEST_IGNORED, methodName));
+    public static void testIgnored(String name) {
+        TestOutputStream.instance().println(MessageUtils.createWithName(TestMessageConstants.TEST_IGNORED, name));
     }
 
-    public static void testFinished(String methodName, long duration) {
+    public static void testFinished(String name, long duration) {
         TestOutputStream.instance()
                 .println(MessageUtils.create(TestMessageConstants.TEST_FINISHED,
-                        new Pair(TestMessageConstants.NAME, methodName),
+                        new Pair(TestMessageConstants.NAME, name),
                         new Pair(TestMessageConstants.DURATION, String.valueOf(duration))));
     }
 
@@ -38,28 +37,28 @@ public class TestRunnerMessageHelper {
     }
 
     public static void testSuiteStarted(String className) {
-        TestOutputStream.instance().println(MessageUtils.createWithNameAndLocation(
-                TestMessageConstants.TEST_SUITE_STARTED, className, "java:test://" + className));
+        TestOutputStream.instance()
+                .println(MessageUtils.createWithName(TestMessageConstants.TEST_SUITE_STARTED, className));
     }
 
     public static void treeNode(String className, String methodName) {
-        TestOutputStream.instance().println(MessageUtils.createWithNameAndLocation(TestMessageConstants.SUITE_TREE_NODE,
-                methodName, "java:test://" + className + "." + methodName));
+        TestOutputStream.instance()
+                .println(MessageUtils.createWithName(TestMessageConstants.SUITE_TREE_NODE, methodName));
     }
 
     public static void suiteTreeNodeStarted(String className) {
-        TestOutputStream.instance().println(MessageUtils.createWithNameAndLocation(
-                TestMessageConstants.SUITE_TREE_STARTED, className, "java:test://" + className));
+        TestOutputStream.instance()
+                .println(MessageUtils.createWithName(TestMessageConstants.SUITE_TREE_STARTED, className));
     }
 
     public static void suiteTreeNodeEnded(String className) {
-        TestOutputStream.instance().println(MessageUtils.createWithNameAndLocation(
-                TestMessageConstants.SUITE_TREE_ENDED, className, "java:test://" + className));
+        TestOutputStream.instance()
+                .println(MessageUtils.createWithName(TestMessageConstants.SUITE_TREE_ENDED, className));
     }
 
-    public static void testFailed(String methodName, Throwable exception, long duration) {
+    public static void testFailed(String name, Throwable exception, long duration) {
         final List<Pair> attributes = new ArrayList<>();
-        attributes.add(new Pair(TestMessageConstants.NAME, methodName));
+        attributes.add(new Pair(TestMessageConstants.NAME, name));
         if (exception != null) {
             final String failMessage = exception.getMessage();
             final StringWriter writer = new StringWriter();

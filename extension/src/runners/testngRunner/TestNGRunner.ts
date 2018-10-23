@@ -4,14 +4,15 @@
 import { ITestItem } from '../../protocols';
 import { BaseRunner } from '../baseRunner/BaseRunner';
 import { BaseRunnerResultAnalyzer } from '../baseRunner/BaseRunnerResultAnalyzer';
-import { JUnit4RunnerResultAnalyzer } from './JUnit4RunnerResultAnalyzer';
+import { TestNGRunnerResultAnalyzer } from './TestNGRunnerResultAnalyzer';
 
-export class JUnit4Runner extends BaseRunner {
+export class TestNGRunner extends BaseRunner {
+
     public constructCommandParams(): string[] {
-        return [...super.constructCommandParams(), 'junit', ...this.tests.map((t: ITestItem) => t.fullName)];
+        return [...super.constructCommandParams(), 'testng', ...this.tests.map((t: ITestItem) => t.fullName)];
     }
 
     public getTestResultAnalyzer(): BaseRunnerResultAnalyzer {
-        return new JUnit4RunnerResultAnalyzer(this.tests);
+        return new TestNGRunnerResultAnalyzer(this.tests);
     }
 }

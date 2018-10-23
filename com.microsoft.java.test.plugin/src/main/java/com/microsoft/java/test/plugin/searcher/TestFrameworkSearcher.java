@@ -20,5 +20,4 @@ public interface TestFrameworkSearcher {
     TestKind getTestKind();
 
     boolean isTestMethod(IMethod method);
-
 }

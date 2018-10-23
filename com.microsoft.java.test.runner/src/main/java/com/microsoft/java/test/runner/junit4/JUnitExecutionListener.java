@@ -49,21 +49,23 @@ public class JUnitExecutionListener extends RunListener {
         updateCurrentSuite(description);
         myCurrentTestStart = System.currentTimeMillis();
 
-        TestRunnerMessageHelper.testStarted(description.getClassName(), description.getMethodName());
+        TestRunnerMessageHelper.testStarted(description.getClassName() + "#" + description.getMethodName());
     }
 
     @Override
     public void testFinished(Description description) throws Exception {
         final long duration = System.currentTimeMillis() - myCurrentTestStart;
 
-        TestRunnerMessageHelper.testFinished(description.getMethodName(), duration);
+        TestRunnerMessageHelper.testFinished(description.getClassName() + "#" + description.getMethodName(), duration);
     }
 
     @Override
     public void testFailure(Failure failure) throws Exception {
         final long duration = System.currentTimeMillis() - myCurrentTestStart;
 
-        TestRunnerMessageHelper.testFailed(failure.getDescription().getMethodName(), failure.getException(), duration);
+        TestRunnerMessageHelper.testFailed(
+                failure.getDescription().getClassName() + "#" + failure.getDescription().getMethodName(),
+                failure.getException(), duration);
     }
 
     @Override
@@ -76,7 +78,7 @@ public class JUnitExecutionListener extends RunListener {
     @Override
     public void testIgnored(Description description) throws Exception {
         updateCurrentSuite(description);
-        TestRunnerMessageHelper.testIgnored(description.getMethodName());
+        TestRunnerMessageHelper.testIgnored(description.getClassName() + "#" + description.getMethodName());
     }
 
     public void suiteSendTree(Description description) {

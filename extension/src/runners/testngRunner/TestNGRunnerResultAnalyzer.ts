@@ -10,11 +10,11 @@ const TEST_START: string = 'testStarted';
 const TEST_FAIL: string = 'testFailed';
 const TEST_FINISH: string = 'testFinished';
 
-export class JUnit4RunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
+export class TestNGRunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
 
     protected processData(data: string): void {
         let res: ITestResultDetails | undefined;
-        const outputData: IJUnit4TestOutputData = JSON.parse(data) as IJUnit4TestOutputData;
+        const outputData: ITestNGOutputData = JSON.parse(data) as ITestNGOutputData;
         switch (outputData.name) {
             case TEST_START:
                 this.testResults.set(outputData.attributes.name, {
@@ -64,13 +64,13 @@ export class JUnit4RunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
     }
 }
 
-interface IJUnit4TestOutputData {
-    type: JUnit4TestOutputType;
+interface ITestNGOutputData {
+    type: TestNGOutputType;
     name: string;
-    attributes: IJUnitTestAttributes;
+    attributes: ITestNGAttributes;
 }
 
-interface IJUnitTestAttributes  {
+interface ITestNGAttributes  {
     name: string;
     duration: string;
     location: string;
@@ -78,7 +78,7 @@ interface IJUnitTestAttributes  {
     details: string;
 }
 
-enum JUnit4TestOutputType {
+enum TestNGOutputType {
     Info,
     Error,
 }
