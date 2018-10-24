@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Uri } from 'vscode';
-import { ITestItem } from '../../protocols';
 import { BaseRunnerResultAnalyzer } from '../baseRunner/BaseRunnerResultAnalyzer';
-import { ITestResult, ITestResultDetails, TestStatus } from '../models';
+import { ITestResultDetails, TestStatus } from '../models';
 
 const TEST_START: string = 'testStarted';
 const TEST_FAIL: string = 'testFailed';
@@ -41,26 +39,6 @@ export class JUnit4RunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
                 res.duration = outputData.attributes.duration;
                 break;
         }
-    }
-
-    protected processMethod(test: ITestItem): ITestResult {
-        let testResultDetails: ITestResultDetails | undefined = this.testResults.get(test.fullName);
-        if (!testResultDetails) {
-            testResultDetails = { status: TestStatus.Skipped };
-        }
-
-        return {
-            fullName: test.fullName,
-            uri: Uri.parse(test.uri).toString(),
-            result: testResultDetails,
-        };
-    }
-
-    private decodeContent(content: string): string {
-        if (!content) {
-            return content;
-        }
-        return content.replace(new RegExp('&#x40;', 'gm'), '@');
     }
 }
 

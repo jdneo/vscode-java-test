@@ -1,25 +1,49 @@
 {
     "configurations": [
+        // {
+        //     "type": "java",
+        //     "name": "CodeLens (Launch) - LauncherJUnit",
+        //     "request": "launch",
+        //     "cwd": "${workspaceFolder}",
+        //     "console": "internalConsole",
+        //     "stopOnEntry": false,
+        //     "mainClass": "com.microsoft.java.test.runner.Launcher",
+        //     "args": "junit com.function.FunctionTest",
+        //     "projectName": "com.microsoft.java.test.runner",
+        //     "classPaths": [
+        //         "D:\\work\\Java\\language\\vscode-java-test\\extension\\server\\com.microsoft.java.test.runner-0.9.0-jar-with-dependencies.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\org\\mockito\\mockito-core\\2.4.0\\mockito-core-2.4.0.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.5.5\\byte-buddy-1.5.5.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\org\\projectlombok\\lombok\\1.18.2\\lombok-1.18.2.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\net\\bytebuddy\\byte-buddy-agent\\1.5.5\\byte-buddy-agent-1.5.5.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\org\\objenesis\\objenesis\\2.4\\objenesis-2.4.jar",
+        //         "C:\\Users\\sheche\\Desktop\\verify\\target\\classes;C:\\Users\\sheche\\.m2\\repository\\junit\\junit\\4.12\\junit-4.12.jar",
+        //         "C:\\Users\\sheche\\Desktop\\verify\\target\\test-classes;C:\\Users\\sheche\\.m2\\repository\\org\\hamcrest\\hamcrest-core\\1.3\\hamcrest-core-1.3.jar",
+        //         "C:\\Users\\sheche\\.m2\\repository\\com\\microsoft\\azure\\functions\\azure-functions-java-library\\1.0.0-beta-5\\azure-functions-java-library-1.0.0-beta-5.jar"
+        //     ]
+        // },
+
         {
             "type": "java",
-            "name": "CodeLens (Launch) - LauncherJUnit",
+            "name": "CodeLens (Launch) - LauncherJunit5",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopOnEntry": false,
             "mainClass": "com.microsoft.java.test.runner.Launcher",
-            "args": "junit com.function.FunctionTest",
+            "args": "junit5 -m com.example.project.CalculatorTests#addsTwoNumbers",
             "projectName": "com.microsoft.java.test.runner",
             "classPaths": [
-                "D:\\work\\Java\\language\\vscode-java-test\\extension\\server\\com.microsoft.java.test.runner-0.9.0-jar-with-dependencies.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\org\\mockito\\mockito-core\\2.4.0\\mockito-core-2.4.0.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.5.5\\byte-buddy-1.5.5.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\org\\projectlombok\\lombok\\1.18.2\\lombok-1.18.2.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\net\\bytebuddy\\byte-buddy-agent\\1.5.5\\byte-buddy-agent-1.5.5.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\org\\objenesis\\objenesis\\2.4\\objenesis-2.4.jar",
-                "C:\\Users\\sheche\\Desktop\\verify\\target\\classes;C:\\Users\\sheche\\.m2\\repository\\junit\\junit\\4.12\\junit-4.12.jar",
-                "C:\\Users\\sheche\\Desktop\\verify\\target\\test-classes;C:\\Users\\sheche\\.m2\\repository\\org\\hamcrest\\hamcrest-core\\1.3\\hamcrest-core-1.3.jar",
-                "C:\\Users\\sheche\\.m2\\repository\\com\\microsoft\\azure\\functions\\azure-functions-java-library\\1.0.0-beta-5\\azure-functions-java-library-1.0.0-beta-5.jar"
+                "D:\\temp\\vscode-java-test-new\\vscode-java-test\\extension\\server\\com.microsoft.java.test.runner-0.9.0-jar-with-dependencies.jar",
+                "C:\\Users\\sheche\\Downloads\\junit5-samples-master\\junit5-jupiter-starter-maven\\target\\test-classes",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.3.1\\junit-jupiter-api-5.3.1.jar",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.3.1\\junit-platform-engine-1.3.1.jar",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.1.1\\opentest4j-1.1.1.jar",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.3.1\\junit-jupiter-engine-5.3.1.jar",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.3.1\\junit-platform-commons-1.3.1.jar",
+                "C:\\Users\\sheche\\Downloads\\junit5-samples-master\\junit5-jupiter-starter-maven\\target\\classes",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.0.0\\apiguardian-api-1.0.0.jar",
+                "C:\\Users\\sheche\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-params\\5.3.1\\junit-jupiter-params-5.3.1.jar"
             ]
         },
 

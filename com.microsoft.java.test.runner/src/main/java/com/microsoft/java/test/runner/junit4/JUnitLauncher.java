@@ -17,9 +17,6 @@ import com.microsoft.java.test.runner.common.TestOutputStream;
 import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;
 
 public class JUnitLauncher implements ITestLauncher {
-//    public static void main(String[] args) {
-//        System.exit(execute(args));
-//    }
 
     @Override
     public int execute(String[] args) {

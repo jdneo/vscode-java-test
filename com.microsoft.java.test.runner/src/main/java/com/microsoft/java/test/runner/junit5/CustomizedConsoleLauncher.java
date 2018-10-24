@@ -12,61 +12,20 @@ package com.microsoft.java.test.runner.junit5;
 
 import com.microsoft.java.test.runner.common.ITestLauncher;
 
-public class CustomizedConsoleLauncher implements ITestLauncher {
+ import org.junit.platform.console.options.CommandLineOptions;
+ import org.junit.platform.console.options.CommandLineOptionsParser;
+ import org.junit.platform.console.options.JOptSimpleCommandLineOptionsParser;
 
-//    public static void main(String... args) {
-//        final int exitCode = execute(System.out, System.err, args);
-//        System.exit(exitCode);
-//    }
+public class CustomizedConsoleLauncher implements ITestLauncher {
 
     @Override
     public int execute(String[] args) {
-        return 0;
+         try {
+             final CommandLineOptionsParser parser = new JOptSimpleCommandLineOptionsParser();
+             final CommandLineOptions options = parser.parse(args);
+             return new CustomizedConsoleTestExecutor(options).executeTests();
+         } catch (final Exception exception) {
+             return 1;
+         }
     }
-
-//    public static int execute(PrintStream out, PrintStream err, String... args) {
-//        final CommandLineOptionsParser parser = new JOptSimpleCommandLineOptionsParser();
-//        final CustomizedConsoleLauncher launcher = new CustomizedConsoleLauncher(parser, out, err);
-//        return launcher.execute(args);
-//    }
-//
-//    private final CommandLineOptionsParser commandLineOptionsParser;
-//    private final PrintStream outStream;
-//    private final PrintStream errStream;
-//    private final Charset charset;
-//
-//    CustomizedConsoleLauncher(CommandLineOptionsParser commandLineOptionsParser, PrintStream out, PrintStream err) {
-//        this(commandLineOptionsParser, out, err, Charset.defaultCharset());
-//    }
-//
-//    CustomizedConsoleLauncher(CommandLineOptionsParser commandLineOptionsParser, PrintStream out, PrintStream err,
-//            Charset charset) {
-//        this.commandLineOptionsParser = commandLineOptionsParser;
-//        this.outStream = out;
-//        this.errStream = err;
-//        this.charset = charset;
-//    }
-//
-//    int execute(String... args) {
-//        final CommandLineOptions options = commandLineOptionsParser.parse(args);
-//        try (PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outStream, charset)))) {
-//            if (options.isDisplayHelp()) {
-//                return 0;
-//            }
-//            return executeTests(options, out);
-//        } finally {
-//            outStream.flush();
-//            errStream.flush();
-//        }
-//    }
-//
-//    private int executeTests(CommandLineOptions options, PrintWriter out) {
-//        try {
-//            return new CustomizedConsoleTestExecutor(options).execute(out);
-//        } catch (final Exception exception) {
-//            exception.printStackTrace(errStream);
-//            errStream.println();
-//        }
-//        return 1;
-//    }
 }

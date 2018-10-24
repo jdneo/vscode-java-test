@@ -8,6 +8,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
+
 package com.microsoft.java.test.runner.junit4;
 
 import com.microsoft.java.test.runner.common.TestRunnerMessageHelper;

@@ -17,7 +17,6 @@ import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherFactory;
 
-import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -34,20 +33,15 @@ public class CustomizedConsoleTestExecutor {
         this.launcher = LauncherFactory.create();
     }
 
-    public int execute(PrintWriter out) throws Exception {
-        return new CustomContextClassLoaderExecutor(createCustomClassLoader()).invoke(() -> executeTests(out));
-    }
-
-    private int executeTests(PrintWriter out) {
-        registerListeners(out);
-        final LauncherDiscoveryRequest discoveryRequest = new DiscoveryRequestCreator().toDiscoveryRequest(options);
-        launcher.execute(discoveryRequest);
-        return 0;
-    }
-
-    private void registerListeners(PrintWriter out) {
-        final TestResultListener listener = new TestResultListener(out);
-        launcher.registerTestExecutionListeners(listener);
+    public int executeTests() throws Exception {
+        return new CustomContextClassLoaderExecutor(createCustomClassLoader()).invoke(() -> {
+            final TestResultListener listener = new TestResultListener();
+            launcher.registerTestExecutionListeners(listener);
+            final LauncherDiscoveryRequest discoveryRequest = new DiscoveryRequestCreator().toDiscoveryRequest(options);
+            launcher.execute(discoveryRequest);
+            return 0;
+        });
+        
     }
 
     private Optional<ClassLoader> createCustomClassLoader() {
@@ -64,8 +58,7 @@ public class CustomizedConsoleTestExecutor {
     private URL toURL(Path path) {
         try {
             return path.toUri().toURL();
-        }
-        catch (final Exception ex) {
+        } catch (final Exception ex) {
             throw new JUnitException("Invalid classpath entry: " + path, ex);
         }
     }

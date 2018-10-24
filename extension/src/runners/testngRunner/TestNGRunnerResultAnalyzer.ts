@@ -55,13 +55,6 @@ export class TestNGRunnerResultAnalyzer extends BaseRunnerResultAnalyzer {
             result: testResultDetails,
         };
     }
-
-    private decodeContent(content: string): string {
-        if (!content) {
-            return content;
-        }
-        return content.replace(new RegExp('&#x40;', 'gm'), '@');
-    }
 }
 
 interface ITestNGOutputData {

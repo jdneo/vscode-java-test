@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { Uri } from 'vscode';
 import { ITestItem, TestLevel } from '../../protocols';
-import { ITestResult, ITestResultDetails } from '../models';
+import { ITestResult, ITestResultDetails, TestStatus } from '../models';
 
 export abstract class BaseRunnerResultAnalyzer {
     protected testResults: Map<string, ITestResultDetails> = new Map<string, ITestResultDetails>();
@@ -45,7 +46,26 @@ export abstract class BaseRunnerResultAnalyzer {
     }
 
     protected abstract processData(data: string): void;
-    protected abstract processMethod(test: ITestItem): ITestResult;
+
+    protected processMethod(test: ITestItem): ITestResult {
+        let testResultDetails: ITestResultDetails | undefined = this.testResults.get(test.fullName);
+        if (!testResultDetails) {
+            testResultDetails = { status: TestStatus.Skipped };
+        }
+
+        return {
+            fullName: test.fullName,
+            uri: Uri.parse(test.uri).toString(),
+            result: testResultDetails,
+        };
+    }
+
+    protected decodeContent(content: string): string {
+        if (!content) {
+            return content;
+        }
+        return content.replace(new RegExp('&#x40;', 'gm'), '@');
+    }
 
     protected get outputRegex(): RegExp {
         return this.regex;
