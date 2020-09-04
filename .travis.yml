@@ -23,8 +23,6 @@ before_install:
       /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
       sleep 3
     fi
-  - nvm install v12.18.3
-  - nvm use v12.18.3
 
 install:
 - npm install
