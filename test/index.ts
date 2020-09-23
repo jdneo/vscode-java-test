@@ -24,16 +24,6 @@ async function main(): Promise<void> {
             stdio: 'inherit',
         });
 
-        // Run Gradle modular project tests
-        await runTests({
-            vscodeExecutablePath,
-            extensionDevelopmentPath,
-            extensionTestsPath: path.resolve(__dirname, './gradle-modular-suite'),
-            launchArgs: [
-                path.join(__dirname, '..', '..', 'test', 'test-projects', 'modular-gradle'),
-            ],
-        });
-
         // Run Gradle JUnit 5 project tests
         await runTests({
             vscodeExecutablePath,
@@ -41,6 +31,16 @@ async function main(): Promise<void> {
             extensionTestsPath: path.resolve(__dirname, './gradle-junit5-suite'),
             launchArgs: [
                 path.join(__dirname, '..', '..', 'test', 'test-projects', 'junit5'),
+            ],
+        });
+
+        // Run Gradle modular project tests
+        await runTests({
+            vscodeExecutablePath,
+            extensionDevelopmentPath,
+            extensionTestsPath: path.resolve(__dirname, './gradle-modular-suite'),
+            launchArgs: [
+                path.join(__dirname, '..', '..', 'test', 'test-projects', 'modular-gradle'),
             ],
         });
         
