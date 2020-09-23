@@ -24,16 +24,6 @@ async function main(): Promise<void> {
             stdio: 'inherit',
         });
 
-        // Run Maven JUnit 4 Code Lens tests
-        await runTests({
-            vscodeExecutablePath,
-            extensionDevelopmentPath,
-            extensionTestsPath: path.resolve(__dirname, './maven-junit4-suite'),
-            launchArgs: [
-                path.join(__dirname, '..', '..', 'test', 'test-projects', 'junit4'),
-            ],
-        });
-
         // Run Gradle modular project tests
         await runTests({
             vscodeExecutablePath,
@@ -51,6 +41,16 @@ async function main(): Promise<void> {
             extensionTestsPath: path.resolve(__dirname, './gradle-junit5-suite'),
             launchArgs: [
                 path.join(__dirname, '..', '..', 'test', 'test-projects', 'junit5'),
+            ],
+        });
+        
+        // Run Maven JUnit 4 Code Lens tests
+        await runTests({
+            vscodeExecutablePath,
+            extensionDevelopmentPath,
+            extensionTestsPath: path.resolve(__dirname, './maven-junit4-suite'),
+            launchArgs: [
+                path.join(__dirname, '..', '..', 'test', 'test-projects', 'junit4'),
             ],
         });
 
