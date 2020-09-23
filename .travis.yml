@@ -8,8 +8,6 @@ matrix:
     env:
       - JDK_HOME=~/openjdk11 # force launching JLS using JDK11
   - os: osx
-    osx_image: xcode10.1
-    jdk: oraclejdk11
 
 branches:
   only:
