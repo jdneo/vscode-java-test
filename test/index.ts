@@ -26,6 +26,7 @@ async function main(): Promise<void> {
 
         // Run Gradle JUnit 5 project tests
         await runTests({
+            version: '1.48.2',
             vscodeExecutablePath,
             extensionDevelopmentPath,
             extensionTestsPath: path.resolve(__dirname, './gradle-junit5-suite'),
