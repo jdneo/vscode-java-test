@@ -5,7 +5,7 @@ import * as assert from 'assert';
 import * as fse from 'fs-extra';
 import { CodeLens, Command, commands, TextDocument, window, workspace, extensions } from 'vscode';
 import { TestCodeLensProvider, testResultManager, ITestItem, ITestResult, TestStatus } from '../../extension.bundle';
-import { Token, Uris } from '../shared';
+import { sleep, Token, Uris } from '../shared';
 
 suite('Code Lens Tests', function() {
 
@@ -18,6 +18,9 @@ suite('Code Lens Tests', function() {
         await window.showTextDocument(document);
 
         const codeLensProvider: TestCodeLensProvider = new TestCodeLensProvider();
+
+        // wait a while for document preparation
+        await sleep(1000);
         const codeLens: CodeLens[] = await codeLensProvider.provideCodeLenses(document, Token.cancellationToken);
         assert.strictEqual(codeLens.length, 8, 'Code Lens should appear for @ParameterizedTest annotation');
 

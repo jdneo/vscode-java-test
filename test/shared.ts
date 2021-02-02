@@ -59,3 +59,9 @@ export async function getJavaVersion(): Promise<number> {
 
     return -1;
 }
+
+export async function sleep(milli: number): Promise<void> {
+    return new Promise<void>((resolve: () => void): void => {
+        setTimeout(resolve, milli);
+    });
+}
