@@ -88,4 +88,11 @@ public class JUnit4TestSearcher extends BaseFrameworkSearcher {
 
         return result.values().toArray(new TestItem[0]);
     }
+
+    @Override
+    public Set<IType> findTestItemsInContainer(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+        final Set<IType> types = new HashSet<>();
+        JUNIT4_TEST_FINDER.findTestsInContainer(element, types, monitor);
+        return types;
+    }
 }

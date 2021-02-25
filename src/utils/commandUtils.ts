@@ -6,6 +6,7 @@ import { JavaLanguageServerCommands, JavaTestRunnerDelegateCommands } from '../c
 import { logger } from '../logger/logger';
 import { ILocation, ISearchTestItemParams, ITestItem, TestKind, TestLevel } from '../protocols';
 import { IJUnitLaunchArguments } from '../runners/baseRunner/BaseRunner';
+import { JavaTestItem } from '../types';
 
 export async function getTestSourcePaths(uri: string[]): Promise<string[]> {
     return await executeJavaLanguageServerCommand<string[]>(
@@ -34,6 +35,21 @@ export async function searchTestCodeLens(uri: string, token?: CancellationToken)
 export async function searchTestLocation(fullName: string): Promise<ILocation[]> {
     return await executeJavaLanguageServerCommand<ILocation[]>(
         JavaTestRunnerDelegateCommands.SEARCH_TEST_LOCATION, fullName) || [];
+}
+
+export async function findTestPackagesAndTypes(projectName: string): Promise<JavaTestItem[]> {
+    return await executeJavaLanguageServerCommand<JavaTestItem[]>(
+        "vscode.java.test.findTestPackagesAndTypes", projectName) || [];
+}
+
+export async function getTestMethods(handerId: string): Promise<JavaTestItem[]> {
+    return await executeJavaLanguageServerCommand<JavaTestItem[]>(
+        "vscode.java.test.getTestMethods", handerId) || [];
+}
+
+export async function getTestTypes(uri: string): Promise<JavaTestItem[]> {
+    return await executeJavaLanguageServerCommand<JavaTestItem[]>(
+        "vscode.java.test.findTestTypes", uri) || [];
 }
 
 export async function resolveStackTraceLocation(trace: string, projectNames: string[]): Promise<string> {

@@ -50,6 +50,12 @@ public class TestDelegateCommandHandler implements IDelegateCommandHandler {
                 return TestSearchUtils.searchLocation(arguments, monitor);
             case RESOLVE_JUNIT_ARGUMENT:
                 return JUnitLaunchUtils.resolveLaunchArgument(arguments, monitor);
+            case "vscode.java.test.findTestPackagesAndTypes":
+                return TestSearchUtils.findTestPackagesAndTypes(arguments, monitor);
+            case "vscode.java.test.getTestMethods":
+                return TestSearchUtils.getTestMethods(arguments, monitor);
+            case "vscode.java.test.findTestTypes":
+                return TestSearchUtils.findTestTypes(arguments, monitor);
             default:
                 throw new UnsupportedOperationException(
                         String.format("Java test plugin doesn't support the command '%s'.", commandId));

@@ -12,8 +12,10 @@
 package com.microsoft.java.test.plugin.util;
 
 import com.google.gson.Gson;
+import com.microsoft.java.test.plugin.model.JavaTestItem;
 import com.microsoft.java.test.plugin.model.SearchTestItemParams;
 import com.microsoft.java.test.plugin.model.TestItem;
+import com.microsoft.java.test.plugin.model.TestKind;
 import com.microsoft.java.test.plugin.model.TestLevel;
 import com.microsoft.java.test.plugin.searcher.TestFrameworkSearcher;
 
@@ -37,6 +39,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -63,6 +66,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -253,6 +257,152 @@ public class TestSearchUtils {
             return new ArrayList<>(map.values());
         }
 
+    }
+
+    public static List<JavaTestItem> findTestTypes(List<Object> arguments, IProgressMonitor monitor)
+            throws CoreException {
+        final List<JavaTestItem> result = new LinkedList<>();
+        final String uriString = (String) arguments.get(0);
+        final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uriString);
+        if (unit == null) {
+            return result;
+        }
+        final Set<IType> testTypes = TestFrameworkUtils.JUNIT5_TEST_SEARCHER
+                .findTestItemsInContainer(unit, monitor);
+        for (final IType type : testTypes) {
+            result.add(TestItemUtils.constructJavaTestItem(
+                type, TestLevel.CLASS, TestKind.JUnit5));
+        }
+        return result;
+    }
+
+    public static List<JavaTestItem> findTestPackagesAndTypes(List<Object> arguments, IProgressMonitor monitor)
+            throws CoreException {
+        final List<JavaTestItem> result = new LinkedList<>();
+        final String projectName = (String) arguments.get(0);
+        final Optional<IJavaProject> optionalJavaProject = Stream.of(ProjectUtils.getJavaProjects())
+                .filter(project -> project.getProject().getName().equals(projectName))
+                .findFirst();
+        if (!optionalJavaProject.isPresent()) {
+            return result;
+        }
+        final IJavaProject javaProject = optionalJavaProject.get();
+        final Map<IPackageFragment, Set<JavaTestItem>> map = new HashMap<>();
+        // We don't check JUnit 4 when JUnit 5 is available since it's backward compatible
+        if (javaProject.findType("org.junit.jupiter.api.Test") != null) {
+            final Set<IType> testTypes = TestFrameworkUtils.JUNIT5_TEST_SEARCHER
+                    .findTestItemsInContainer(javaProject, monitor);
+            for (final IType type : testTypes) {
+                final IPackageFragment packageFragment = type.getPackageFragment();
+                final JavaTestItem testItem = TestItemUtils.constructJavaTestItem(
+                        type, TestLevel.CLASS, TestKind.JUnit5);
+                if (map.containsKey(packageFragment)) {
+                    map.get(packageFragment).add(testItem);
+                } else {
+                    final Set<JavaTestItem> set = new HashSet<>();
+                    set.add(testItem);
+                    map.put(packageFragment, set);
+                }
+            }
+        } else if (javaProject.findType("org.junit.Test") != null) {
+            final Set<IType> testTypes = TestFrameworkUtils.JUNIT4_TEST_SEARCHER
+                    .findTestItemsInContainer(javaProject, monitor);
+            for (final IType type : testTypes) {
+                final IPackageFragment packageFragment = type.getPackageFragment();
+                final JavaTestItem testItem = TestItemUtils.constructJavaTestItem(
+                        type, TestLevel.CLASS, TestKind.JUnit);
+                if (map.containsKey(packageFragment)) {
+                    map.get(packageFragment).add(testItem);
+                } else {
+                    final Set<JavaTestItem> set = new HashSet<>();
+                    set.add(testItem);
+                    map.put(packageFragment, set);
+                }
+            }
+        }
+
+        if (javaProject.findType("org.testng.annotations.Test") != null) {
+            final Set<IType> testTypes = TestFrameworkUtils.TESTNG_TEST_SEARCHER
+                    .findTestItemsInContainer(javaProject, monitor);
+            for (final IType type : testTypes) {
+                final IPackageFragment packageFragment = type.getPackageFragment();
+                final JavaTestItem testItem = TestItemUtils.constructJavaTestItem(
+                        type, TestLevel.CLASS, TestKind.TestNG);
+                if (map.containsKey(packageFragment)) {
+                    map.get(packageFragment).add(testItem);
+                } else {
+                    final Set<JavaTestItem> set = new HashSet<>();
+                    set.add(testItem);
+                    map.put(packageFragment, set);
+                }
+            }
+        }
+
+        for (final Map.Entry<IPackageFragment, Set<JavaTestItem>> entry : map.entrySet()){
+            final JavaTestItem packageItem = TestItemUtils.constructJavaTestItem(
+                    entry.getKey(), TestLevel.PACKAGE, TestKind.None);
+            packageItem.setChildren(new LinkedList<>(entry.getValue()));
+            result.add(packageItem);
+        }
+
+        return result;
+    }
+
+    public static List<JavaTestItem> getTestMethods(List<Object> arguments, IProgressMonitor monitor)
+            throws JavaModelException {
+        final List<JavaTestItem> result = new LinkedList<>();
+        final String handlerId = (String) arguments.get(0);
+        // final TestKind testKind = (TestKind) arguments.get(1);
+        if (handlerId == null || handlerId.isEmpty()) {
+            return result;
+        }
+        final IType testType = (IType) JavaCore.create(handlerId);
+        if (testType == null) {
+            return result;
+        }
+
+        final ICompilationUnit unit = testType.getCompilationUnit();
+        if (unit == null) {
+            return result;
+        }
+        final CompilationUnit root = (CompilationUnit) parseToAst(unit, false /* fromCache */, monitor);
+        for (final IType type : unit.getAllTypes()) {
+            if (type.getFullyQualifiedName().equals(testType.getFullyQualifiedName())) {
+                final ASTNode node = root.findDeclaringNode(type.getKey());
+                if (!(node instanceof TypeDeclaration)) {
+                    continue;
+                }
+
+                final ITypeBinding binding = ((TypeDeclaration) node).resolveBinding();
+                if (binding == null) {
+                    continue;
+                }
+
+                final TestFrameworkSearcher searcher = TestFrameworkUtils.JUNIT5_TEST_SEARCHER;
+                // switch (testKind) {
+                //     case JUnit5:
+                //         searcher = TestFrameworkUtils.JUNIT5_TEST_SEARCHER;
+                //         break;
+                //     case JUnit:
+                //         searcher = TestFrameworkUtils.JUNIT4_TEST_SEARCHER;
+                //         break;
+                //     case TestNG:
+                //         searcher = TestFrameworkUtils.TESTNG_TEST_SEARCHER;
+                //         break;
+                //     default:
+                //         return result;
+                // }
+                for (final IMethodBinding methodBinding : binding.getDeclaredMethods()) {
+                    if (searcher.isTestMethod(methodBinding)) {
+                        result.add(TestItemUtils.constructJavaTestItem(
+                                (IMethod) methodBinding.getJavaElement(), TestLevel.METHOD, searcher.getTestKind()));
+                    }
+                }
+                break;
+            }
+        }
+
+        return result;
     }
 
     public static List<Location> searchLocation(List<Object> arguments, IProgressMonitor monitor) throws CoreException {

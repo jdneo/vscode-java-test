@@ -240,6 +240,13 @@ public class TestNGTestSearcher extends BaseFrameworkSearcher {
             pm.done();
         }
     }
+
+    @Override
+    public Set<IType> findTestItemsInContainer(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+        final Set<IType> types = new HashSet<>();
+        this.findTestsInContainer(element, types, monitor);
+        return types;
+    }
 }
 
 /*

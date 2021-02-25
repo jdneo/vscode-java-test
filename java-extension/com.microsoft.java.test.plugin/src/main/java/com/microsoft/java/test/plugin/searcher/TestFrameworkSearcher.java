@@ -22,6 +22,8 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IAnnotationBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
+import java.util.Set;
+
 public interface TestFrameworkSearcher {
 
     TestKind getTestKind();
@@ -39,4 +41,6 @@ public interface TestFrameworkSearcher {
     TestItem parseTestItem(IMethodBinding methodBinding) throws JavaModelException;
 
     TestItem[] findTestsInContainer(IJavaElement element, IProgressMonitor monitor) throws CoreException;
+
+    Set<IType> findTestItemsInContainer(IJavaElement element, IProgressMonitor monitor) throws CoreException;
 }

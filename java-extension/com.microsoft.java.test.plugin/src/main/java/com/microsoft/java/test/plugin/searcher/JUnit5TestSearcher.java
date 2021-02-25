@@ -163,4 +163,11 @@ public class JUnit5TestSearcher extends BaseFrameworkSearcher {
 
         return false;
     }
+
+    @Override
+    public Set<IType> findTestItemsInContainer(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+        final Set<IType> types = new HashSet<>();
+        JUNIT5_TEST_FINDER.findTestsInContainer(element, types, monitor);
+        return types;
+    }
 }

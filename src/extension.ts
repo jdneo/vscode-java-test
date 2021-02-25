@@ -4,7 +4,7 @@
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import { commands, DebugConfiguration, Event, Extension, ExtensionContext, extensions, Range, TreeView, TreeViewExpansionEvent, TreeViewSelectionChangeEvent, Uri, window, workspace } from 'vscode';
+import { commands, test, ExtensionContext, Uri, workspace } from 'vscode';
 import { dispose as disposeTelemetryWrapper, initializeFromJsonFile, instrumentOperation, instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
 import { sendInfo } from 'vscode-extension-telemetry-wrapper';
 import { testCodeLensController } from './codelens/TestCodeLensController';
@@ -17,6 +17,7 @@ import { JavaTestRunnerCommands } from './constants/commands';
 import { ACTIVATION_CONTEXT_KEY } from './constants/configs';
 import { IProgressProvider, IProgressReporter } from './debugger.api';
 import { testExplorer } from './explorer/testExplorer';
+import { JavaTestProvider } from './JavaTestProvider';
 import { logger } from './logger/logger';
 import { ITestItem } from './protocols';
 import { ITestResult } from './runners/models';
@@ -44,98 +45,105 @@ async function doActivate(_operationId: string, context: ExtensionContext): Prom
     const storagePath: string = context.storageUri?.fsPath || path.join(os.tmpdir(), 'java_test_runner');
     await fse.ensureDir(storagePath);
     logger.initialize(storagePath, context.subscriptions);
-
-    const javaLanguageSupport: Extension<any> | undefined = extensions.getExtension('redhat.java');
-    let javaLanguageSupportVersion: string = '0.0.0';
-    if (javaLanguageSupport?.isActive) {
-        const extensionApi: any = javaLanguageSupport.exports;
-        if (!extensionApi) {
-            return;
-        }
-
-        serverMode = extensionApi.serverMode;
-
-        if (extensionApi.onDidClasspathUpdate) {
-            const onDidClasspathUpdate: Event<Uri> = extensionApi.onDidClasspathUpdate;
-            context.subscriptions.push(onDidClasspathUpdate(async () => {
-                await testFileWatcher.registerListeners(true /*enableDebounce*/);
-            }));
-        }
-
-        if (extensionApi.onDidServerModeChange) {
-            const onDidServerModeChange: Event<string> = extensionApi.onDidServerModeChange;
-            context.subscriptions.push(onDidServerModeChange(async (mode: string) => {
-                serverMode = mode;
-                testExplorer.refresh();
-                await testFileWatcher.registerListeners();
-            }));
-        }
-
-        if (extensionApi.onDidProjectsImport) {
-            const onDidProjectsImport: Event<Uri[]> = extensionApi.onDidProjectsImport;
-            context.subscriptions.push(onDidProjectsImport(async () => {
-                await testFileWatcher.registerListeners(true /*enableDebounce*/);
-            }));
-        }
-
-        javaLanguageSupportVersion = javaLanguageSupport.packageJSON.version;
-    }
-
-    const javaDebugger: Extension<any> | undefined = extensions.getExtension('vscjava.vscode-java-debug');
-    if (javaDebugger?.isActive) {
-        progressProvider = javaDebugger.exports?.progressProvider;
-    }
-
-    await testFileWatcher.registerListeners();
-    testExplorer.initialize(context);
-    const testTreeView: TreeView<ITestItem> = window.createTreeView(testExplorer.testExplorerViewId, { treeDataProvider: testExplorer, showCollapseAll: true });
-    runnerScheduler.initialize(context);
-    testReportProvider.initialize(context, javaLanguageSupportVersion);
-
     context.subscriptions.push(
-        testExplorer,
-        testTreeView,
-        testStatusBarProvider,
-        testResultManager,
-        testReportProvider,
-        testFileWatcher,
-        logger,
-        testCodeLensController,
-        testItemModel,
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.OPEN_DOCUMENT, async (uri: Uri, range?: Range) => await openTextDocument(uri, range)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.REFRESH_EXPLORER, (node: ITestItem) => testExplorer.refresh(node)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_CODELENS, async (test: ITestItem) => await runFromCodeLens(test, false /* isDebug */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_CODELENS, async (test: ITestItem) => await runFromCodeLens(test, true /* isDebug */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_ALL_TEST_FROM_EXPLORER, async () => await runTestsFromExplorer()),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_ALL_TEST_FROM_EXPLORER, async () => await debugTestsFromExplorer()),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_EXPLORER, async (node?: ITestItem, launchConfiguration?: DebugConfiguration) => await runTestsFromExplorer(node, launchConfiguration)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_EXPLORER, async (node?: ITestItem, launchConfiguration?: DebugConfiguration) => await debugTestsFromExplorer(node, launchConfiguration)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RELAUNCH_TESTS, async () => await runnerScheduler.relaunch()),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.SHOW_TEST_REPORT, async (tests?: ITestResult[]) => await testReportProvider.report(tests)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.SHOW_TEST_OUTPUT, () => showOutputChannel()),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.OPEN_TEST_LOG, async () => await openLogFile(storagePath)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_CANCEL, async () => await runnerScheduler.cleanUp(true /* isCancel */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_CONFIG_MIGRATE, async () => await migrateTestConfig()),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_EDITOR, async (uri?: Uri, progressReporter?: IProgressReporter) => await executeTestsFromUri(uri, progressReporter, false /* isDebug */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_EDITOR, async (uri?: Uri, progressReporter?: IProgressReporter) => await executeTestsFromUri(uri, progressReporter, true /* isDebug */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_REPORT_OPEN_STACKTRACE, async (trace: string, fullName: string) => await openStackTrace(trace, fullName)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_REPORT_OPEN_TEST_SOURCE_LOCATION, async (uri: string, range: string, fullName: string) => await openTestSourceLocation(uri, range, fullName)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_JAVA_PROJECT_EXPLORER, async (node: any) => await runTestsFromJavaProjectExplorer(node, false /* isDebug */)),
-        instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_JAVA_PROJECT_EXPLORER, async (node: any) => await runTestsFromJavaProjectExplorer(node, true /* isDebug */)),
-
-        // track the test tree view events.
-        testTreeView.onDidChangeSelection((_e: TreeViewSelectionChangeEvent<ITestItem>) => {
-            EventCounter.increase('didChangeSelection');
-        }),
-        testTreeView.onDidCollapseElement((_e: TreeViewExpansionEvent<ITestItem>) => {
-            EventCounter.increase('didCollapseElement');
-        }),
-        testTreeView.onDidExpandElement((_e: TreeViewExpansionEvent<ITestItem>) => {
-            EventCounter.increase('didExpandElement');
-        }),
+        test.registerTestProvider(new JavaTestProvider()),
     );
 
-    setContextKeyForDeprecatedConfig();
+    // const storagePath: string = context.storageUri?.fsPath || path.join(os.tmpdir(), 'java_test_runner');
+    // await fse.ensureDir(storagePath);
+    // logger.initialize(storagePath, context.subscriptions);
+
+    // const javaLanguageSupport: Extension<any> | undefined = extensions.getExtension('redhat.java');
+    // let javaLanguageSupportVersion: string = '0.0.0';
+    // if (javaLanguageSupport?.isActive) {
+    //     const extensionApi: any = javaLanguageSupport.exports;
+    //     if (!extensionApi) {
+    //         return;
+    //     }
+
+    //     serverMode = extensionApi.serverMode;
+
+    //     if (extensionApi.onDidClasspathUpdate) {
+    //         const onDidClasspathUpdate: Event<Uri> = extensionApi.onDidClasspathUpdate;
+    //         context.subscriptions.push(onDidClasspathUpdate(async () => {
+    //             await testFileWatcher.registerListeners(true /*enableDebounce*/);
+    //         }));
+    //     }
+
+    //     if (extensionApi.onDidServerModeChange) {
+    //         const onDidServerModeChange: Event<string> = extensionApi.onDidServerModeChange;
+    //         context.subscriptions.push(onDidServerModeChange(async (mode: string) => {
+    //             serverMode = mode;
+    //             testExplorer.refresh();
+    //             await testFileWatcher.registerListeners();
+    //         }));
+    //     }
+
+    //     if (extensionApi.onDidProjectsImport) {
+    //         const onDidProjectsImport: Event<Uri[]> = extensionApi.onDidProjectsImport;
+    //         context.subscriptions.push(onDidProjectsImport(async () => {
+    //             await testFileWatcher.registerListeners(true /*enableDebounce*/);
+    //         }));
+    //     }
+
+    //     javaLanguageSupportVersion = javaLanguageSupport.packageJSON.version;
+    // }
+
+    // const javaDebugger: Extension<any> | undefined = extensions.getExtension('vscjava.vscode-java-debug');
+    // if (javaDebugger?.isActive) {
+    //     progressProvider = javaDebugger.exports?.progressProvider;
+    // }
+
+    // await testFileWatcher.registerListeners();
+    // testExplorer.initialize(context);
+    // const testTreeView: TreeView<ITestItem> = window.createTreeView(testExplorer.testExplorerViewId, { treeDataProvider: testExplorer, showCollapseAll: true });
+    // runnerScheduler.initialize(context);
+    // testReportProvider.initialize(context, javaLanguageSupportVersion);
+
+    // context.subscriptions.push(
+    //     testExplorer,
+    //     testTreeView,
+    //     testStatusBarProvider,
+    //     testResultManager,
+    //     testReportProvider,
+    //     testFileWatcher,
+    //     logger,
+    //     testCodeLensController,
+    //     testItemModel,
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.OPEN_DOCUMENT, async (uri: Uri, range?: Range) => await openTextDocument(uri, range)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.REFRESH_EXPLORER, (node: ITestItem) => testExplorer.refresh(node)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_CODELENS, async (test: ITestItem) => await runFromCodeLens(test, false /* isDebug */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_CODELENS, async (test: ITestItem) => await runFromCodeLens(test, true /* isDebug */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_ALL_TEST_FROM_EXPLORER, async () => await runTestsFromExplorer()),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_ALL_TEST_FROM_EXPLORER, async () => await debugTestsFromExplorer()),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_EXPLORER, async (node?: ITestItem, launchConfiguration?: DebugConfiguration) => await runTestsFromExplorer(node, launchConfiguration)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_EXPLORER, async (node?: ITestItem, launchConfiguration?: DebugConfiguration) => await debugTestsFromExplorer(node, launchConfiguration)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RELAUNCH_TESTS, async () => await runnerScheduler.relaunch()),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.SHOW_TEST_REPORT, async (tests?: ITestResult[]) => await testReportProvider.report(tests)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.SHOW_TEST_OUTPUT, () => showOutputChannel()),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.OPEN_TEST_LOG, async () => await openLogFile(storagePath)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_CANCEL, async () => await runnerScheduler.cleanUp(true /* isCancel */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_CONFIG_MIGRATE, async () => await migrateTestConfig()),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_EDITOR, async (uri?: Uri, progressReporter?: IProgressReporter) => await executeTestsFromUri(uri, progressReporter, false /* isDebug */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_EDITOR, async (uri?: Uri, progressReporter?: IProgressReporter) => await executeTestsFromUri(uri, progressReporter, true /* isDebug */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_REPORT_OPEN_STACKTRACE, async (trace: string, fullName: string) => await openStackTrace(trace, fullName)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.JAVA_TEST_REPORT_OPEN_TEST_SOURCE_LOCATION, async (uri: string, range: string, fullName: string) => await openTestSourceLocation(uri, range, fullName)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.RUN_TEST_FROM_JAVA_PROJECT_EXPLORER, async (node: any) => await runTestsFromJavaProjectExplorer(node, false /* isDebug */)),
+    //     instrumentOperationAsVsCodeCommand(JavaTestRunnerCommands.DEBUG_TEST_FROM_JAVA_PROJECT_EXPLORER, async (node: any) => await runTestsFromJavaProjectExplorer(node, true /* isDebug */)),
+
+    //     // track the test tree view events.
+    //     testTreeView.onDidChangeSelection((_e: TreeViewSelectionChangeEvent<ITestItem>) => {
+    //         EventCounter.increase('didChangeSelection');
+    //     }),
+    //     testTreeView.onDidCollapseElement((_e: TreeViewExpansionEvent<ITestItem>) => {
+    //         EventCounter.increase('didCollapseElement');
+    //     }),
+    //     testTreeView.onDidExpandElement((_e: TreeViewExpansionEvent<ITestItem>) => {
+    //         EventCounter.increase('didExpandElement');
+    //     }),
+    // );
+
+    // setContextKeyForDeprecatedConfig();
 }
 
 export function isStandardServerReady(): boolean {

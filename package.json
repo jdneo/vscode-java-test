@@ -1,4 +1,5 @@
 {
+    "enableProposedApi": true,
     "name": "vscode-java-test",
     "displayName": "Java Test Runner",
     "description": "%description%",
@@ -59,15 +60,6 @@
             "./server/org.junit.platform.suite.api_1.6.0.v20200203-2009.jar",
             "./server/org.apiguardian_1.1.0.v20190826-0900.jar"
         ],
-        "views": {
-            "test": [
-                {
-                    "id": "testExplorer",
-                    "name": "Java",
-                    "when": "java:testRunnerActivated"
-                }
-            ]
-        },
         "viewsWelcome": [
             {
                 "view": "testExplorer",
@@ -443,7 +435,9 @@
         "lint": "gulp lint",
         "build-plugin": "gulp build-plugin",
         "build-resources": "gulp build-resources",
-        "vscode:prepublish": "gulp build-resources && webpack --mode production"
+        "vscode:prepublish": "gulp build-resources && webpack --mode production",
+        "download-api": "vscode-dts dev",
+        "postinstall": "npm run download-api"
     },
     "extensionDependencies": [
         "redhat.java",
@@ -483,6 +477,7 @@
         "pug": "^2.0.4",
         "vscode-extension-telemetry-wrapper": "^0.8.0",
         "winston": "^3.2.1",
-        "winston-transport": "^4.3.0"
+        "winston-transport": "^4.3.0",
+        "vscode-dts": "^0.3.1"
     }
 }

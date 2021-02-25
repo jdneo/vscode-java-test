@@ -4,6 +4,9 @@
 import { logger } from '../../logger/logger';
 import { testResultManager } from '../../testResultManager';
 import { ITestOutputData, ITestResult, TestStatus } from '../models';
+import * as iconv from 'iconv-lite';
+import * as os from 'os';
+import * as path from 'path';
 
 export abstract class BaseRunnerResultAnalyzer {
     protected testIds: Set<string> = new Set<string>();

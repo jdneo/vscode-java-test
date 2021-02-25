@@ -11,6 +11,7 @@
 
 package com.microsoft.java.test.plugin.util;
 
+import com.microsoft.java.test.plugin.model.JavaTestItem;
 import com.microsoft.java.test.plugin.model.TestItem;
 import com.microsoft.java.test.plugin.model.TestKind;
 import com.microsoft.java.test.plugin.model.TestLevel;
@@ -50,6 +51,26 @@ public class TestItemUtils {
         final String projectName = element.getJavaProject().getProject().getName();
 
         return new TestItem(displayName, fullName, uri, projectName, range, level, kind);
+    }
+
+    public static JavaTestItem constructJavaTestItem(IJavaElement element, TestLevel level, TestKind kind)
+            throws JavaModelException {
+        final String displayName;
+        final String fullName;
+        if (element instanceof IPackageFragment && ((IPackageFragment) element).isDefaultPackage()) {
+            displayName = DEFAULT_PACKAGE_NAME;
+            fullName = DEFAULT_PACKAGE_NAME;
+        } else {
+            displayName = element.getElementName();
+            fullName = parseTestItemFullName(element, level);
+        }
+        final String uri = JDTUtils.getFileURI(element.getResource());
+        final Range range = parseTestItemRange(element);
+        final String projectName = element.getJavaProject().getProject().getName();
+
+        final JavaTestItem result = new JavaTestItem(displayName, fullName, uri, projectName, range, level, kind);
+        result.setJdtHandler(element.getHandleIdentifier());
+        return result;
     }
 
     public static Range parseTestItemRange(IJavaElement element) throws JavaModelException {

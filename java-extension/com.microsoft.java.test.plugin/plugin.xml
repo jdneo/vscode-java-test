@@ -9,6 +9,9 @@
       <command id="vscode.java.test.search.codelens" />
       <command id="vscode.java.test.search.location" />
       <command id="vscode.java.test.junit.argument" />
+      <command id="vscode.java.test.findTestPackagesAndTypes" />
+      <command id="vscode.java.test.getTestMethods" />
+      <command id="vscode.java.test.findTestTypes" />
     </delegateCommandHandler>
   </extension>
 </plugin>

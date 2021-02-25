@@ -33,12 +33,12 @@ export abstract class BaseRunner implements ITestRunner {
     public async setup(context: IRunnerContext): Promise<void> {
         this.context = context;
         await this.startSocketServer();
-        const flattenedTestIds: string[] = [];
-        for (const test of context.tests) {
-            this.flattenTestIds(test, flattenedTestIds);
-        }
-        this.testIds = flattenedTestIds;
-        this.updateTestResultsToPending();
+        // const flattenedTestIds: string[] = [];
+        // for (const test of context.tests) {
+        //     this.flattenTestIds(test, flattenedTestIds);
+        // }
+        this.testIds = [];
+        // this.updateTestResultsToPending();
     }
 
     public async run(launchConfiguration: DebugConfiguration, progressReporter?: IProgressReporter): Promise<Set<string>> {
